@@ -71,7 +71,8 @@ export async function extractIngredientsJSONViaSDK({
       },
       ocr_text: {
         type: "string",
-        description: "Texto crudo de la sección de ingredientes (si corresponde).",
+        description:
+          "Texto crudo relevante del envase (ingredientes, advertencias, 'puede contener', etc.).",
       },
       warnings: {
         type: "array",
@@ -94,16 +95,17 @@ export async function extractIngredientsJSONViaSDK({
   const system = [
     "Eres un asistente experto en leer etiquetas de alimentos en español (Chile).",
     "Devuelve SOLAMENTE JSON que cumpla EXACTAMENTE el schema indicado.",
-    "Extrae la lista de ingredientes; no incluyas cantidades ni texto decorativo.",
+    "Procesa TODO el texto visible de la etiqueta, no solo el bloque de ingredientes.",
+    "Extrae la lista de ingredientes manteniendo porcentajes, aditivos y anotaciones tal como aparecen.",
     "Si no encuentras ingredientes, devuelve ingredients: [].",
-    "Incluye detected_allergens con posibles alérgenos si aparecen o se infieren del texto.",
+    "Incluye detected_allergens con posibles alérgenos explícitos o implícitos aunque estén en otra sección (p. ej. 'Puede contener', 'Contiene ingrendientes alpergenos').",
     "Estima confidence entre 0 y 1.",
     "Incluye siempre warnings (usa [] si no hay advertencias) y ocr_text (usa \"\" si no puedes extraer texto).",
   ].join(" ");
 
   const userPrompt = [
     "Tarea: Devuelve un JSON válido según el schema.",
-    "Si hay múltiples secciones, prioriza la que esté rotulada como 'Ingredientes'.",
+    "Analiza todas las secciones que contengan ingredientes, alérgenos o advertencias relacionadas.",
     `Locale de referencia: ${locale}.`,
   ].join(" ");
 

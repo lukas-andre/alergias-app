@@ -1,5 +1,9 @@
-import type { Metadata } from "next";
 import "./globals.css";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
+
+import SupabaseProvider from "@/components/SupabaseProvider";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: {
@@ -7,17 +11,24 @@ export const metadata: Metadata = {
     default: "Nutrición para Alergias",
   },
   description:
-    "Escáner web para extraer ingredientes de etiquetas chilenas usando Tesseract.js en tu navegador.",
+    "Escáner web que usa OpenAI Vision para extraer ingredientes de etiquetas chilenas y evaluar riesgos.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <SupabaseProvider initialSession={session}>{children}</SupabaseProvider>
+      </body>
     </html>
   );
 }

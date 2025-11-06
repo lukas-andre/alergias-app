@@ -1,6 +1,7 @@
 "use client";
 
 import type { IngredientsResult } from "@/lib/openai/vision";
+import type { ProfilePayload, RiskAssessment, RiskReason } from "@/lib/risk/types";
 
 export type AnalysisStatus =
   | "idle"
@@ -29,6 +30,8 @@ export interface AnalysisPayload {
   usage?: TokensUsage;
   estimatedCost?: EstimatedCost | null;
   model?: string;
+  profile?: ProfilePayload | null;
+  risk?: RiskAssessment | null;
 }
 
 interface AnalysisResultProps {
@@ -64,6 +67,36 @@ function renderBody({
   status,
   statusLabel,
 }: AnalysisResultProps) {
+  const formatRiskLabel = (level: RiskAssessment["risk"]) => {
+    switch (level) {
+      case "high":
+        return "Alto";
+      case "medium":
+        return "Medio";
+      case "low":
+      default:
+        return "Bajo";
+    }
+  };
+
+  const formatReason = (reason: RiskReason) => {
+    switch (reason.type) {
+      case "contains":
+        return `Ingrediente identificado${reason.allergen ? ` (${reason.allergen})` : ""}`;
+      case "trace":
+        return `Posible traza${reason.allergen ? ` (${reason.allergen})` : ""}`;
+      case "same_line":
+        return "Misma línea de producción";
+      case "e_number_uncertain":
+        return "E-number incierto";
+      case "low_confidence":
+        return "Confianza del modelo baja";
+      case "no_profile":
+      default:
+        return "Perfil incompleto";
+    }
+  };
+
   switch (status) {
     case "idle":
       return (
@@ -90,7 +123,7 @@ function renderBody({
     case "succeeded":
       if (!result) return null;
 
-      const { data, usage, tokensUSD, estimatedCost, model } = result;
+      const { data, usage, tokensUSD, estimatedCost, model, risk } = result;
 
       return (
         <div className="success">
@@ -119,6 +152,42 @@ function renderBody({
               <p className="placeholder">Sin alérgenos detectados.</p>
             )}
           </section>
+
+          {risk ? (
+            <section className={`risk-card risk-card--${risk.risk}`}>
+              <header>
+                <span className="risk-label">Riesgo</span>
+                <strong>{formatRiskLabel(risk.risk)}</strong>
+                <span className="risk-confidence">
+                  Confianza modelo: {(risk.confidence * 100).toFixed(0)}%
+                </span>
+              </header>
+              <div className="risk-content">
+                <div>
+                  <h4>Motivos</h4>
+                  {risk.reasons.length ? (
+                    <ul>
+                      {risk.reasons.map((reason, index) => (
+                        <li key={`${reason.type}-${index}`}>
+                          <strong>{formatReason(reason)}:</strong> {reason.token}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="placeholder">Sin observaciones adicionales.</p>
+                  )}
+                </div>
+                <div>
+                  <h4>Próximos pasos</h4>
+                  <ul className="chips">
+                    {risk.actions.map((action) => (
+                      <li key={action}>{action}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </section>
+          ) : null}
 
           <section className="metrics">
             <div>

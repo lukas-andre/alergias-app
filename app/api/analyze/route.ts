@@ -7,6 +7,9 @@ import {
   estimateCost,
   type ModelKey,
 } from "@/lib/openai/cost-estimator";
+import { evaluateRisk } from "@/lib/risk/evaluate";
+import type { ProfilePayload, RiskAssessment } from "@/lib/risk/types";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { extractIngredientsJSONViaSDK } from "@/lib/openai/vision";
 
 export const runtime = "nodejs";
@@ -53,6 +56,30 @@ export async function POST(request: Request) {
       model,
     });
 
+    let profilePayload: ProfilePayload | null = null;
+    let riskAssessment: RiskAssessment | null = null;
+
+    try {
+      const supabase = await createSupabaseServerClient();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
+
+      if (!authError && user) {
+        const { data: payload, error: rpcError } = await supabase.rpc("get_profile_payload", {
+          p_user_id: user.id,
+        });
+
+        if (!rpcError && payload) {
+          profilePayload = payload as unknown as ProfilePayload;
+          riskAssessment = evaluateRisk(data, profilePayload);
+        }
+      }
+    } catch (cause) {
+      console.error("Error obteniendo perfil de Supabase:", cause);
+    }
+
     const estimatedCost =
       width && height
         ? estimateCost({
@@ -78,6 +105,8 @@ export async function POST(request: Request) {
           }
         : null,
       model,
+      profile: profilePayload,
+      risk: riskAssessment,
     });
   } catch (error) {
     console.error(error);
