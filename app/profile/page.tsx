@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import type { Session } from "@supabase/supabase-js";
@@ -635,62 +636,6 @@ export default function ProfilePage() {
     }
   };
 
-  const handleSignIn = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const email = String(formData.get("email") ?? "");
-    const password = String(formData.get("password") ?? "");
-
-    setError(null);
-    setSaving(true);
-
-    try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (signInError) {
-        throw signInError;
-      }
-      form.reset();
-      setMessage("Sesión iniciada.");
-      router.refresh();
-    } catch (cause) {
-      console.error(cause);
-      setError(cause instanceof Error ? cause.message : "No pudimos iniciar sesión.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSignUp = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const formData = new FormData(form);
-    const email = String(formData.get("email") ?? "");
-    const password = String(formData.get("password") ?? "");
-
-    setError(null);
-    setSaving(true);
-
-    try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (signUpError) {
-        throw signUpError;
-      }
-      form.reset();
-      setMessage("Registro enviado. Revisa tu correo para confirmar la cuenta.");
-    } catch (cause) {
-      console.error(cause);
-      setError(cause instanceof Error ? cause.message : "No pudimos registrar la cuenta.");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleSignOut = async () => {
     setSaving(true);
@@ -1161,58 +1106,12 @@ export default function ProfilePage() {
     }
   };
 
-  if (!authChecked) {
+  // Middleware protects this route - users must be authenticated
+  if (!authChecked || !session) {
     return (
       <main className="profile-page">
         <h1>Perfil alérgico</h1>
         <p>Cargando…</p>
-      </main>
-    );
-  }
-
-  if (!session) {
-    return (
-      <main className="profile-page">
-        <h1>Perfil alérgico</h1>
-        <p>Necesitas iniciar sesión para gestionar tu perfil.</p>
-
-        <section className="auth-grid">
-          <form className="card" onSubmit={handleSignIn}>
-            <h2>Iniciar sesión</h2>
-            <label className="field">
-              <span>Email</span>
-              <input name="email" type="email" required autoComplete="email" />
-            </label>
-            <label className="field">
-              <span>Contraseña</span>
-              <input name="password" type="password" required autoComplete="current-password" />
-            </label>
-            <button type="submit" disabled={saving}>
-              {saving ? "Procesando…" : "Entrar"}
-            </button>
-          </form>
-
-          <form className="card" onSubmit={handleSignUp}>
-            <h2>Crear cuenta</h2>
-            <label className="field">
-              <span>Email</span>
-              <input name="email" type="email" required autoComplete="email" />
-            </label>
-            <label className="field">
-              <span>Contraseña</span>
-              <input name="password" type="password" required autoComplete="new-password" />
-            </label>
-            <button type="submit" disabled={saving}>
-              {saving ? "Procesando…" : "Registrarme"}
-            </button>
-            <p className="helper">
-              Te enviaremos un correo de confirmación. Una vez aceptado, vuelve a iniciar sesión.
-            </p>
-          </form>
-        </section>
-
-        {error ? <p className="error">{error}</p> : null}
-        {message ? <p className="success">{message}</p> : null}
       </main>
     );
   }
@@ -1228,6 +1127,11 @@ export default function ProfilePage() {
           </p>
         </div>
         <div className="header-actions">
+          <Link href="/scan">
+            <button type="button" className="secondary">
+              ← Volver al Escáner
+            </button>
+          </Link>
           <button type="button" onClick={handleSignOut} disabled={saving}>
             Cerrar sesión
           </button>

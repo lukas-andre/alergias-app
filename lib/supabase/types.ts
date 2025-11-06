@@ -331,6 +331,7 @@ export type Database = {
           created_at: string;
           display_name: string | null;
           notes: string | null;
+          onboarding_completed_at: string | null;
           pregnant: boolean;
           updated_at: string;
           user_id: string;
@@ -340,6 +341,7 @@ export type Database = {
           created_at?: string;
           display_name?: string | null;
           notes?: string | null;
+          onboarding_completed_at?: string | null;
           pregnant?: boolean;
           updated_at?: string;
           user_id: string;
@@ -349,6 +351,7 @@ export type Database = {
           created_at?: string;
           display_name?: string | null;
           notes?: string | null;
+          onboarding_completed_at?: string | null;
           pregnant?: boolean;
           updated_at?: string;
           user_id?: string;

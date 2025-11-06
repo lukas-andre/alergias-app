@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
+import Link from "next/link";
+import { UserCircle2, ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   AnalysisResult,
   type AnalysisPayload,
@@ -152,6 +154,22 @@ const [result, setResult] = useState<AnalysisPayload | null>(null);
 
   return (
     <main className="scan-page">
+      {/* Header with Navigation */}
+      <header className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-200">
+        <Link href="/">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Inicio
+          </Button>
+        </Link>
+        <Link href="/profile">
+          <Button variant="outline" size="sm" className="gap-2">
+            <UserCircle2 className="w-4 h-4" />
+            Editar Perfil
+          </Button>
+        </Link>
+      </header>
+
       <div className="scan-intro">
         <h1>Escanea ingredientes</h1>
         <p>
