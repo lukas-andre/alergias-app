@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Palette B – Clean-Natural</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Sora:wght@600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#F1F5F9; --text:#111827; --muted:#374151; --card:#FFFFFF; --border:#E5E7EB;
+      --primary:#0EA5A4; --primary-strong:#0B7F7E; --soft:#D1FAE5; --accent:#A3E635; /* lime */
+      --warm:#FEF3C7; /* panel tibio para destacar info */
+      --success:#16A34A; --warning:#CA8A04; --danger:#DC2626; --info:#0EA5E9;
+      --radius:14px; --pad:14px; --shadow:0 8px 26px rgba(17,24,39,.08);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    header{background:var(--primary);color:#fff;padding:20px}
+    .brand{display:flex;align-items:center;gap:12px;max-width:920px;margin:0 auto}
+    .logo{inline-size:36px;block-size:36px;border-radius:10px;background:linear-gradient(145deg,var(--soft),#ffffff);display:grid;place-items:center;color:var(--primary-strong);font-weight:800}
+    h1{font-family:Sora,Inter,sans-serif;font-size:20px;margin:0}
+    main{max-width:920px;margin:28px auto;padding:0 16px;display:grid;gap:16px}
+    .row{display:grid;grid-template-columns:repeat(12,1fr);gap:16px}
+    .card{grid-column:span 6;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--pad);box-shadow:var(--shadow)}
+    .panel{background:var(--warm);border:1px dashed #F59E0B;border-radius:12px;padding:12px;color:#92400E}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .btn{padding:10px 14px;border-radius:12px;border:1px solid transparent;font-weight:600;cursor:pointer}
+    .btn.primary{background:var(--primary);color:#fff}
+    .btn.primary:hover{background:var(--primary-strong)}
+    .btn.ghost{background:#ECFEFF;color:#0C4A6E;border-color:#BAE6FD}
+    .btn.accent{background:var(--accent);color:#1A2E05}
+    .alert{padding:12px 14px;border-radius:12px;border:1px solid;display:flex;gap:10px;align-items:baseline}
+    .success{background:#ECFDF5;border-color:#BBF7D0;color:var(--success)}
+    .warning{background:#FFFBEB;border-color:#FDE68A;color:var(--warning)}
+    .danger{background:#FEF2F2;border-color:#FCA5A5;color:var(--danger)}
+    .info{background:#EFF6FF;border-color:#BFDBFE;color:var(--info)}
+    .swatches{display:flex;gap:10px;flex-wrap:wrap}
+    .swatch{min-width:110px;border-radius:12px;border:1px solid var(--border);overflow:hidden}
+    .swatch .chip{height:42px}
+    .swatch .meta{padding:8px;font-size:12px;color:var(--muted)}
+    @media (max-width:860px){ .card{grid-column:span 12} }
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">A</div>
+    <h1>Palette B · Clean-Natural</h1>
+  </div>
+</header>
+<main>
+  <section class="row">
+    <article class="card">
+      <h2 style="margin:0 0 6px 0;font-size:18px;">Componentes</h2>
+      <p style="margin:0 0 8px 0;color:var(--muted)">Teal clínico con panel cálido para avisos.</p>
+      <div class="btns">
+        <button class="btn primary">Guardar</button>
+        <button class="btn ghost">Cancelar</button>
+        <button class="btn accent">Sugerencia</button>
+      </div>
+      <div style="height:12px"></div>
+      <div class="panel">Este producto declara “sin gluten”. Verifica siempre el fabricante.</div>
+      <div style="height:12px"></div>
+      <div class="alert success" role="alert"><strong>OK:</strong> Apto para tu perfil.</div>
+      <div class="alert warning" role="alert"><strong>Atención:</strong> Podría contener trazas.</div>
+      <div class="alert danger" role="alert"><strong>Riesgo:</strong> Alérgeno directo.</div>
+      <div class="alert info" role="alert"><strong>Info:</strong> OCR con 98% de confianza.</div>
+    </article>
+    <article class="card">
+      <h2 style="margin:0 0 6px 0;font-size:18px;">Swatches</h2>
+      <div class="swatches">
+        <div class="swatch"><div class="chip" style="background:var(--primary)"></div><div class="meta">--primary #0EA5A4</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--primary-strong)"></div><div class="meta">--primary-strong #0B7F7E</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--soft)"></div><div class="meta">--soft #D1FAE5</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--accent)"></div><div class="meta">--accent #A3E635</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--warm)"></div><div class="meta">--warm #FEF3C7</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--success)"></div><div class="meta">--success #16A34A</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--warning)"></div><div class="meta">--warning #CA8A04</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--danger)"></div><div class="meta">--danger #DC2626</div></div>
+        <div class="swatch"><div class="chip" style="background:var(--info)"></div><div class="meta">--info #0EA5E9</div></div>
+      </div>
+    </article>
+  </section>
+</main>
+</body>
+</html>

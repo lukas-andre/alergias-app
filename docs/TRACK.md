@@ -10,29 +10,30 @@
 
 ## 0) Preparación / Infra (P0)
 
-* [ ] Crear repo monorepo (Next.js App Router + libs) o single app.
-* [ ] Configurar **Supabase** (proyecto, URL/keys, Auth Email/Password).
-* [ ] Configurar entornos: `.env.local` (anon), server `.env` (service-role).
-* [ ] Añadir **types** de DB: `supabase gen types` → `lib/supabase/types.ts`.
-* [ ] Implementar **helpers** `lib/supabase/browser|server|service` (Archivo 1 §6.3).
+* [x] Crear repo monorepo (Next.js App Router + libs) o single app.
+* [x] Configurar **Supabase** (proyecto, URL/keys, Auth Email/Password).
+* [x] Configurar entornos: `.env.local` (anon), server `.env` (service-role).
+* [x] Añadir **types** de DB: `supabase gen types` → `lib/supabase/types.ts`. ⚠️ **Regenerar después de aplicar migraciones**
+* [x] Implementar **helpers** `lib/supabase/browser|server|service` (Archivo 1 §6.3).
 * [ ] Agregar **Sentry/monitoring** (frontend + server actions) [opcional P0].
 * [ ] Setup **CI** (build, typecheck, lint) + preview deployments.
 
-## 1) Migraciones DB + RLS (P0)
+## 1) Migraciones DB + RLS (P0) ✅
 
-* [ ] Correr migración **core** (Archivo 1 §13): diccionarios, perfiles, estrictitud, extractions, tokens, e_numbers, roles, auditoría.
-* [ ] Crear triggers: `set_updated_at`, `ensure_default_strictness`, `grant_owner_role`.
-* [ ] Activar RLS + **políticas**: diccionarios lectura pública; datos de usuario dueño; roles en backoffice.
-* [ ] Semilla mínima: `diet_types`, `allergen_types`, `intolerance_types`, `e_numbers` críticos.
-* [ ] Crear índices recomendados (trigram, compuestos).
-* [ ] Tablas **app_settings** (feature flags) [Archivo 2 §7].
+* [x] Correr migración **core** (Archivo 1 §13): diccionarios, perfiles, estrictitud, extractions, tokens, e_numbers, roles, auditoría. ✅ **14 migraciones en `supabase/migrations/`**
+* [x] Crear triggers: `set_updated_at`, `ensure_default_strictness`, `grant_owner_role`. ✅ **Plus `log_dictionary_change`**
+* [x] Activar RLS + **políticas**: diccionarios lectura pública; datos de usuario dueño; roles en backoffice. ✅ **44 políticas + helper `has_role()`**
+* [x] Semilla mínima: `diet_types` (18), `allergen_types` (16), `intolerance_types` (9), `e_numbers` críticos (23). ✅ **296+ registros seeded**
+* [x] Crear índices recomendados (trigram, compuestos). ✅ **Trigram en synonyms, extractions, tokens**
+* [x] Tablas **app_settings** (feature flags) [Archivo 2 §7]. ✅ **16 settings seeded**
+* [x] Seed migrations: **diet_types**, **allergen_types**, **allergen_synonyms** (230), **intolerance_types**, **e_numbers**, **app_settings**. ✅ **Todas aplicadas correctamente con MCP Supabase**
 
-## 2) RPCs / Server (P0)
+## 2) RPCs / Server (P0) ✅
 
-* [ ] `get_my_profile_payload()` (wrapper de `get_profile_payload`).
-* [ ] `decide_e_number(user, code)` (política e‑codes).
-* [ ] (P1) `get_effective_strictness_map(user)`.
-* [ ] Endpoints API: `/api/profile` (GET), `/api/scan` (POST), `/api/feedback` (POST).
+* [x] `get_my_profile_payload()` (wrapper de `get_profile_payload`). ✅
+* [x] `decide_e_number(user, code)` (política e‑codes). ✅
+* [x] (P1) `get_effective_strictness_map(user)`. ✅ **Implementado (batch optimization)**
+* [x] Endpoints API: `/api/profile` (GET), `/api/scan` (POST). ⚠️ **`/api/feedback` pendiente**
 
 ## 3) Onboarding (Wizard 7 pasos) (P0)
 
