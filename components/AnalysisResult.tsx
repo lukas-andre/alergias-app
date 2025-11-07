@@ -192,6 +192,49 @@ function renderBody({
             </Card>
           )}
 
+          {/* Traffic Light Risk Assessment - MOST PROMINENT */}
+          {risk && (
+            <TrafficLightDisplay
+              risk={risk.risk}
+              reasons={risk.reasons.map((reason) =>
+                humanizeRiskReason(formatReason(reason), reason.allergen)
+              )}
+              allergens={data.detected_allergens}
+            />
+          )}
+
+          {/* Allergens Section */}
+          <Card className="border-2 border-danger-200 bg-danger-soft shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-danger-dark flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Alérgenos Detectados
+              </CardTitle>
+              <CardDescription className="text-danger-dark/80">
+                Alérgenos encontrados en el análisis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {data.detected_allergens.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {data.detected_allergens.map((item, index) => (
+                    <Badge
+                      key={`${item}-${index}`}
+                      variant="destructive"
+                      className="bg-danger text-white px-3 py-1.5 text-sm font-semibold"
+                    >
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-accent-fresh-dark font-medium">
+                  ✅ No detectamos alérgenos conocidos
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Ingredients Section */}
           <Card className="border-neutral-200 bg-white shadow-sm">
             <CardHeader>
@@ -223,66 +266,6 @@ function renderBody({
             </CardContent>
           </Card>
 
-          {/* Allergens Section */}
-          <Card className="border-2 border-danger-200 bg-danger-soft shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold text-danger-dark flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5" />
-                Alérgenos Detectados
-              </CardTitle>
-              <CardDescription className="text-danger-dark/80">
-                Alérgenos encontrados en el análisis
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {data.detected_allergens.length ? (
-                <div className="flex flex-wrap gap-2">
-                  {data.detected_allergens.map((item, index) => (
-                    <Badge
-                      key={`${item}-${index}`}
-                      variant="destructive"
-                      className="bg-danger text-danger-foreground px-3 py-1 text-sm font-semibold"
-                    >
-                      {item}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-accent-fresh-dark font-medium">
-                  ✅ No detectamos alérgenos conocidos
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Traffic Light Risk Assessment */}
-          {risk && (
-            <TrafficLightDisplay
-              risk={risk.risk}
-              reasons={risk.reasons.map((reason) =>
-                humanizeRiskReason(formatReason(reason), reason.allergen)
-              )}
-              allergens={data.detected_allergens}
-            />
-          )}
-
-          {/* Quality Metrics */}
-          <Card className="border-neutral-200 bg-white shadow-sm">
-            <CardContent className="py-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-neutral-700">
-                  Calidad del escaneo
-                </span>
-                <div className="text-right">
-                  <div className="text-lg mb-1">{quality.emoji}</div>
-                  <span className="text-sm font-semibold text-neutral-900">
-                    {quality.label}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Warnings Section */}
           {data.warnings.length > 0 && (
             <Card className="border-warning-200 bg-warning-soft shadow-sm">
@@ -306,6 +289,12 @@ function renderBody({
               </CardContent>
             </Card>
           )}
+
+          {/* Quality Badge - Compact inline display */}
+          <div className="flex items-center justify-center gap-2 text-sm text-neutral-600">
+            <span>{quality.emoji}</span>
+            <span className="font-medium">{quality.label}</span>
+          </div>
         </div>
       );
     default:
