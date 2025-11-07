@@ -12,7 +12,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, X, Shield, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,7 +45,7 @@ export default function StrictnessEditorPage() {
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<StrictnessFormData>({
-    resolver: zodResolver(strictnessSchema),
+    resolver: zodResolver(strictnessSchema) as Resolver<StrictnessFormData>,
     defaultValues: {
       profile_name: "Diario",
       block_traces: false,
@@ -57,6 +57,7 @@ export default function StrictnessEditorPage() {
       anaphylaxis_mode: false,
       notes: "",
     },
+    mode: "onChange",
   });
 
   useEffect(() => {
@@ -161,7 +162,7 @@ export default function StrictnessEditorPage() {
           block_same_line: data.block_same_line,
           e_numbers_uncertain: data.e_numbers_uncertain,
           min_model_confidence: data.min_model_confidence,
-          residual_protein_ppm_default: data.residual_protein_ppm,
+          residual_protein_ppm_default: data.residual_protein_ppm ?? undefined,
           pediatric_mode: data.pediatric_mode,
           anaphylaxis_mode: data.anaphylaxis_mode,
           description: data.notes || null,

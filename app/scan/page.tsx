@@ -162,44 +162,55 @@ const [result, setResult] = useState<AnalysisPayload | null>(null);
   }, [abortCurrentJob, revokePreview]);
 
   return (
-    <main className="scan-page">
-      {/* Header with Navigation */}
-      <header className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-200">
-        <Link href="/">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Inicio
-          </Button>
-        </Link>
-        <Link href="/profile">
-          <Button variant="outline" size="sm" className="gap-2">
-            <UserCircle2 className="w-4 h-4" />
-            Editar Perfil
-          </Button>
-        </Link>
-      </header>
+    <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-teal-50">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* Header with Navigation */}
+        <header className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-200">
+          <Link href="/">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Inicio
+            </Button>
+          </Link>
+          <Link href="/profile">
+            <Button variant="outline" size="sm" className="gap-2">
+              <UserCircle2 className="w-4 h-4" />
+              Editar Perfil
+            </Button>
+          </Link>
+        </header>
 
-      <div className="scan-intro">
-        <h1>Escanea Etiquetas</h1>
-        <p>
-          Captura la etiqueta de cualquier producto. Verificamos cada ingrediente
-          contra tu perfil de alergias y te mostramos si es seguro para ti.
-        </p>
-      </div>
+        {/* Hero Section */}
+        <div className="text-center mb-12 max-w-3xl mx-auto">
+          <h1 className="font-display text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
+            Escanea Etiquetas
+          </h1>
+          <p className="text-lg md:text-xl text-neutral-600 leading-relaxed">
+            Captura la etiqueta de cualquier producto. Verificamos cada ingrediente
+            contra tu perfil de alergias y te mostramos si es seguro para ti.
+          </p>
+        </div>
 
-      <div className="scan-grid">
-        <ImagePicker
-          disabled={status === "processing" || status === "uploading"}
-          onClear={handleClear}
-          onSelect={handleSelect}
-          previewUrl={previewUrl}
-        />
-        <AnalysisResult
-          error={error}
-          result={result}
-          status={status}
-          statusLabel={statusLabel}
-        />
+        {/* Scanner Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          <div className="w-full">
+            <ImagePicker
+              disabled={status === "processing" || status === "uploading"}
+              onClear={handleClear}
+              onSelect={handleSelect}
+              previewUrl={previewUrl}
+            />
+          </div>
+          <div className="w-full">
+            <AnalysisResult
+              error={error}
+              result={result}
+              status={status}
+              statusLabel={statusLabel}
+              previewUrl={previewUrl}
+            />
+          </div>
+        </div>
       </div>
     </main>
   );

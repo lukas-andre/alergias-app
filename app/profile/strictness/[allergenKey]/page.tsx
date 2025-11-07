@@ -26,7 +26,7 @@ interface GlobalStrictness {
   block_traces: boolean;
   block_same_line: boolean;
   e_numbers_uncertain: "allow" | "warn" | "block";
-  residual_protein_ppm_default: number;
+  residual_protein_ppm_default: number | null;
 }
 
 interface OverrideFormData {
@@ -103,12 +103,14 @@ export default function AllergenOverrideEditorPage() {
           .eq("id", profile.active_strictness_id)
           .single();
 
-        setGlobalSettings({
-          block_traces: strictness.block_traces,
-          block_same_line: strictness.block_same_line,
-          e_numbers_uncertain: strictness.e_numbers_uncertain,
-          residual_protein_ppm_default: strictness.residual_protein_ppm_default,
-        });
+        if (strictness) {
+          setGlobalSettings({
+            block_traces: strictness.block_traces,
+            block_same_line: strictness.block_same_line,
+            e_numbers_uncertain: strictness.e_numbers_uncertain,
+            residual_protein_ppm_default: strictness.residual_protein_ppm_default,
+          });
+        }
 
         // Check if override exists
         const { data: override } = await supabase

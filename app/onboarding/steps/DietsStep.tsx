@@ -8,7 +8,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Salad } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -29,10 +29,11 @@ export function DietsStep({ initialData, onNext, onBack, onSkip }: DietsStepProp
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<DietsFormData>({
-    resolver: zodResolver(dietsSchema),
+    resolver: zodResolver(dietsSchema) as Resolver<DietsFormData>,
     defaultValues: {
-      diets: initialData?.diets ?? [],
+      diets: initialData?.diets || [],
     },
+    mode: "onChange",
   });
 
   // Fetch diet types from Supabase

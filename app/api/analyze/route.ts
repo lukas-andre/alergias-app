@@ -141,8 +141,8 @@ export async function POST(request: Request) {
           // Get unique E-numbers
           const uniqueENumbers = Array.from(new Set(eNumbers));
 
-          // Call decide_e_number for each E-code
-          const eNumberPolicies: Array<{
+          // Type for decide_e_number RPC response
+          type ENumberPolicy = {
             code: string;
             policy: "allow" | "warn" | "block" | "unknown";
             name_es?: string;
@@ -150,7 +150,12 @@ export async function POST(request: Request) {
             matched_allergens?: string[];
             residual_protein_risk?: boolean;
             reason?: string;
-          }> = [];
+            likely_origins?: string[];
+            exists?: boolean;
+          };
+
+          // Call decide_e_number for each E-code
+          const eNumberPolicies: ENumberPolicy[] = [];
 
           for (const code of uniqueENumbers) {
             try {
@@ -159,8 +164,8 @@ export async function POST(request: Request) {
                 p_code: code,
               });
 
-              if (policyData) {
-                eNumberPolicies.push(policyData as any);
+              if (policyData && typeof policyData === 'object') {
+                eNumberPolicies.push(policyData as ENumberPolicy);
               }
             } catch (eNumError) {
               console.error(`Error checking E-number ${code}:`, eNumError);

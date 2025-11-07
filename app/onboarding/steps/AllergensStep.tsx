@@ -12,7 +12,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertCircle, Plus, Trash2 } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -38,10 +38,11 @@ export function AllergensStep({ initialData, onNext, onBack, onSkip }: Allergens
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<AllergensFormData>({
-    resolver: zodResolver(allergensSchema),
+    resolver: zodResolver(allergensSchema) as Resolver<AllergensFormData>,
     defaultValues: {
-      allergens: initialData?.allergens ?? [],
+      allergens: initialData?.allergens || [],
     },
+    mode: "onChange",
   });
 
   const { fields, append, remove } = useFieldArray({

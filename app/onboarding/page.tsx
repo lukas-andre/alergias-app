@@ -88,7 +88,9 @@ export default function OnboardingPage() {
         if (hasOnboardingProgress() && !isProgressStale(24)) {
           const saved = loadOnboardingProgress();
           if (saved) {
-            setOnboardingData(saved.data);
+            // Ensure arrays have default values for required fields
+            // Cast is safe because we're reading from validated localStorage schema
+            setOnboardingData(saved.data as Partial<CompleteOnboardingData>);
             setCurrentStep(saved.currentStep);
           }
         }
@@ -288,7 +290,7 @@ export default function OnboardingPage() {
               min_model_confidence: onboardingData.strictness.min_model_confidence,
               pediatric_mode: onboardingData.strictness.pediatric_mode,
               anaphylaxis_mode: onboardingData.strictness.anaphylaxis_mode,
-              residual_protein_ppm_default: onboardingData.strictness.residual_protein_ppm,
+              residual_protein_ppm_default: onboardingData.strictness.residual_protein_ppm ?? undefined,
             })
             .eq("id", existingProfile.id);
 
@@ -311,7 +313,7 @@ export default function OnboardingPage() {
               min_model_confidence: onboardingData.strictness.min_model_confidence,
               pediatric_mode: onboardingData.strictness.pediatric_mode,
               anaphylaxis_mode: onboardingData.strictness.anaphylaxis_mode,
-              residual_protein_ppm_default: onboardingData.strictness.residual_protein_ppm,
+              residual_protein_ppm_default: onboardingData.strictness.residual_protein_ppm ?? undefined,
             })
             .select()
             .single();

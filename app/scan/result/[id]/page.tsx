@@ -146,70 +146,77 @@ export default function ScanResultPage() {
     );
   }
 
+  // TODO: Add image_url field to extraction table and fetch it here
+  // For now, we don't display the scanned photo in saved results
+  const previewUrl = null;
+
   return (
-    <main className="container mx-auto px-4 py-8 max-w-5xl">
-      {/* Header */}
-      <header className="mb-8 flex items-center justify-between pb-4 border-b">
-        <div>
-          <h1 className="font-display text-3xl font-bold text-neutral-900 mb-2">
-            Análisis de Etiqueta
-          </h1>
-          {metadata && (
-            <p className="text-sm text-neutral-600">
-              {humanizeTimestamp(metadata.created_at)}
-            </p>
-          )}
-        </div>
-        <Link href="/scan">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="w-4 h-4" />
-            Volver
-          </Button>
-        </Link>
-      </header>
-
-      {/* Analysis Result */}
-      <AnalysisResult
-        status="succeeded"
-        result={{
-          data: analysis,
-          tokensUSD: undefined,
-          usage: undefined,
-          estimatedCost: null,
-          model: undefined,
-          profile: profile,
-          risk: risk,
-        }}
-        error={null}
-      />
-
-      {/* Metadata Section */}
-      {metadata && (
-        <section className="mt-8 p-6 bg-neutral-50 rounded-lg border border-neutral-200">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-4">
-            Información del Análisis
-          </h2>
-          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <dt className="text-sm font-medium text-neutral-600">Escaneado</dt>
-              <dd className="text-sm text-neutral-900">
+    <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-teal-50">
+      <div className="container mx-auto px-4 py-8 max-w-5xl">
+        {/* Header */}
+        <header className="mb-8 flex items-center justify-between pb-4 border-b border-neutral-200">
+          <div>
+            <h1 className="font-display text-3xl font-bold text-neutral-900 mb-2">
+              Análisis de Etiqueta
+            </h1>
+            {metadata && (
+              <p className="text-sm text-neutral-600">
                 {humanizeTimestamp(metadata.created_at)}
-              </dd>
-            </div>
-            {metadata.model_confidence !== null && (
+              </p>
+            )}
+          </div>
+          <Link href="/scan">
+            <Button variant="ghost" size="sm" className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Volver
+            </Button>
+          </Link>
+        </header>
+
+        {/* Analysis Result */}
+        <AnalysisResult
+          status="succeeded"
+          result={{
+            data: analysis,
+            tokensUSD: undefined,
+            usage: undefined,
+            estimatedCost: null,
+            model: undefined,
+            profile: profile,
+            risk: risk,
+          }}
+          error={null}
+          previewUrl={previewUrl}
+        />
+
+        {/* Metadata Section */}
+        {metadata && (
+          <section className="mt-8 p-6 bg-white rounded-lg border border-neutral-200 shadow-sm">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">
+              Información del Análisis
+            </h2>
+            <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <dt className="text-sm font-medium text-neutral-600">
-                  Calidad del escaneo
-                </dt>
+                <dt className="text-sm font-medium text-neutral-600">Escaneado</dt>
                 <dd className="text-sm text-neutral-900">
-                  {confidenceToQuality(metadata.model_confidence).emoji}{" "}
-                  {confidenceToQuality(metadata.model_confidence).label}
+                  {humanizeTimestamp(metadata.created_at)}
                 </dd>
               </div>
-            )}
-          </dl>
-        </section>
-      )}
+              {metadata.model_confidence !== null && (
+                <div>
+                  <dt className="text-sm font-medium text-neutral-600">
+                    Calidad del escaneo
+                  </dt>
+                  <dd className="text-sm text-neutral-900">
+                    {confidenceToQuality(metadata.model_confidence).emoji}{" "}
+                    {confidenceToQuality(metadata.model_confidence).label}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          </section>
+        )}
+      </div>
     </main>
   );
 }

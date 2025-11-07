@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @next/next/no-img-element */
+
 import type { IngredientsResult } from "@/lib/openai/vision";
 import type { ProfilePayload, RiskAssessment, RiskReason } from "@/lib/risk/types";
 import { TrafficLightDisplay } from "@/components/scan/TrafficLightDisplay";
@@ -7,6 +9,15 @@ import {
   humanizeRiskReason,
   confidenceToQuality,
 } from "@/lib/utils/humanize-copy";
+import { Loader2, AlertTriangle, Sparkles, ImageIcon } from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export type AnalysisStatus =
   | "idle"
@@ -44,6 +55,7 @@ interface AnalysisResultProps {
   result: AnalysisPayload | null;
   status: AnalysisStatus;
   statusLabel?: string | null;
+  previewUrl?: string | null;
 }
 
 export function AnalysisResult({
@@ -51,18 +63,22 @@ export function AnalysisResult({
   result,
   status,
   statusLabel,
+  previewUrl,
 }: AnalysisResultProps) {
   return (
-    <section className="ocr-result">
-      <header>
-        <h2>Resultado del Análisis</h2>
-        <p>Revisamos cada ingrediente y te mostramos lo que encontramos.</p>
-      </header>
-
-      <div className="ocr-body">
-        {renderBody({ error, result, status, statusLabel })}
+    <div className="space-y-6">
+      <div className="text-center md:text-left">
+        <h2 className="font-display text-3xl font-bold text-neutral-900 mb-2 flex items-center gap-2 justify-center md:justify-start">
+          <Sparkles className="w-7 h-7 text-primary" />
+          Resultado del Análisis
+        </h2>
+        <p className="text-base text-neutral-600">
+          Revisamos cada ingrediente y te mostramos lo que encontramos.
+        </p>
       </div>
-    </section>
+
+      {renderBody({ error, result, status, statusLabel, previewUrl })}
+    </div>
   );
 }
 
@@ -71,6 +87,7 @@ function renderBody({
   result,
   status,
   statusLabel,
+  previewUrl,
 }: AnalysisResultProps) {
   const formatRiskLabel = (level: RiskAssessment["risk"]) => {
     switch (level) {
@@ -105,90 +122,190 @@ function renderBody({
   switch (status) {
     case "idle":
       return (
-        <p className="placeholder">
-          Selecciona una foto clara de la tabla de ingredientes. Aquí verás los
-          resultados del análisis.
-        </p>
+        <Card className="border-2 border-dashed border-neutral-300 bg-neutral-50">
+          <CardContent className="py-12">
+            <div className="text-center">
+              <ImageIcon className="w-16 h-16 text-neutral-400 mx-auto mb-4" />
+              <p className="text-base text-neutral-600 max-w-md mx-auto">
+                Selecciona una foto clara de la tabla de ingredientes. Aquí verás los
+                resultados del análisis.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       );
     case "uploading":
     case "processing":
       return (
-        <div className="progress">
-          <div className="spinner" aria-hidden />
-          <p>{statusLabel ?? "Analizando etiqueta..."}</p>
-        </div>
+        <Card className="border-primary-200 bg-primary-50">
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <Loader2 className="w-12 h-12 animate-spin text-primary" />
+              <p className="text-base text-neutral-700 font-medium">
+                {statusLabel ?? "Analizando etiqueta..."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       );
     case "failed":
       return (
-        <div className="error">
-          <strong>No pudimos analizar la imagen.</strong>
-          <p>{error ?? "Intenta nuevamente con una foto más nítida."}</p>
-        </div>
+        <Card className="border-2 border-danger bg-danger-soft">
+          <CardContent className="py-8">
+            <div className="text-center">
+              <AlertTriangle className="w-12 h-12 text-danger mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-danger-dark mb-2">
+                No pudimos analizar la imagen
+              </h3>
+              <p className="text-base text-neutral-700">
+                {error ?? "Intenta nuevamente con una foto más nítida."}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       );
     case "succeeded":
       if (!result) return null;
 
       const { data, usage, tokensUSD, estimatedCost, model, risk } = result;
+      const quality = confidenceToQuality(data.confidence);
 
       return (
-        <div className="success">
-          <section>
-            <h3>Ingredientes</h3>
-            {data.ingredients.length ? (
-              <ul className="chips">
-                {data.ingredients.map((item, index) => (
-                  <li key={`${item}-${index}`}>{item}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="placeholder">No encontramos ingredientes en la imagen.</p>
-            )}
-          </section>
+        <div className="space-y-6">
+          {/* Photo Display Section */}
+          {previewUrl && (
+            <Card className="border-neutral-200 bg-white shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-neutral-900">
+                  Etiqueta Escaneada
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border-2 border-neutral-200 bg-neutral-50">
+                  <img
+                    src={previewUrl}
+                    alt="Etiqueta escaneada"
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-          <section>
-            <h3>⚠️ Alérgenos Detectados</h3>
-            {data.detected_allergens.length ? (
-              <ul className="chips chips--alert">
-                {data.detected_allergens.map((item, index) => (
-                  <li key={`${item}-${index}`}>{item}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="placeholder">✅ No detectamos alérgenos conocidos</p>
-            )}
-          </section>
+          {/* Ingredients Section */}
+          <Card className="border-neutral-200 bg-white shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-neutral-900">
+                Ingredientes
+              </CardTitle>
+              <CardDescription>
+                Ingredientes detectados en la etiqueta
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {data.ingredients.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {data.ingredients.map((item, index) => (
+                    <Badge
+                      key={`${item}-${index}`}
+                      variant="outline"
+                      className="bg-neutral-50 text-neutral-700 border-neutral-300 px-3 py-1 text-sm"
+                    >
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-neutral-600">
+                  No encontramos ingredientes en la imagen.
+                </p>
+              )}
+            </CardContent>
+          </Card>
 
-          {risk ? (
+          {/* Allergens Section */}
+          <Card className="border-2 border-danger-200 bg-danger-soft shadow-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold text-danger-dark flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5" />
+                Alérgenos Detectados
+              </CardTitle>
+              <CardDescription className="text-danger-dark/80">
+                Alérgenos encontrados en el análisis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {data.detected_allergens.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {data.detected_allergens.map((item, index) => (
+                    <Badge
+                      key={`${item}-${index}`}
+                      variant="destructive"
+                      className="bg-danger text-danger-foreground px-3 py-1 text-sm font-semibold"
+                    >
+                      {item}
+                    </Badge>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-accent-fresh-dark font-medium">
+                  ✅ No detectamos alérgenos conocidos
+                </p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Traffic Light Risk Assessment */}
+          {risk && (
             <TrafficLightDisplay
               risk={risk.risk}
               reasons={risk.reasons.map((reason) =>
                 humanizeRiskReason(formatReason(reason), reason.allergen)
               )}
               allergens={data.detected_allergens}
-              className="mt-6"
             />
-          ) : null}
+          )}
 
-          <section className="metrics">
-            <div>
-              <span>Calidad del escaneo</span>
-              <strong>
-                {confidenceToQuality(data.confidence).emoji}{" "}
-                {confidenceToQuality(data.confidence).label}
-              </strong>
-            </div>
-          </section>
+          {/* Quality Metrics */}
+          <Card className="border-neutral-200 bg-white shadow-sm">
+            <CardContent className="py-6">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-neutral-700">
+                  Calidad del escaneo
+                </span>
+                <div className="text-right">
+                  <div className="text-lg mb-1">{quality.emoji}</div>
+                  <span className="text-sm font-semibold text-neutral-900">
+                    {quality.label}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-          {data.warnings.length ? (
-            <section className="traces">
-              <h4>Advertencias</h4>
-              <ul>
-                {data.warnings.map((warning, index) => (
-                  <li key={`${warning}-${index}`}>{warning}</li>
-                ))}
-              </ul>
-            </section>
-          ) : null}
+          {/* Warnings Section */}
+          {data.warnings.length > 0 && (
+            <Card className="border-warning-200 bg-warning-soft shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg font-semibold text-warning-dark">
+                  Advertencias
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ul className="space-y-2">
+                  {data.warnings.map((warning, index) => (
+                    <li
+                      key={`${warning}-${index}`}
+                      className="flex items-start gap-2 text-sm text-neutral-800"
+                    >
+                      <span className="text-warning mt-0.5">•</span>
+                      {warning}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+          )}
         </div>
       );
     default:

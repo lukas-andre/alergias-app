@@ -11,7 +11,7 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Save, X } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -39,7 +39,7 @@ export function ProfileEditForm({
   const [activeTab, setActiveTab] = useState("basic");
 
   const form = useForm<ProfileEditFormData>({
-    resolver: zodResolver(profileEditSchema),
+    resolver: zodResolver(profileEditSchema) as Resolver<ProfileEditFormData>,
     defaultValues: {
       basicData: initialData.basicData || {
         display_name: "",

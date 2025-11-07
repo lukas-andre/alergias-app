@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Shield } from "lucide-react";
 import { Form, FormField, FormItem } from "@/components/ui/form";
@@ -22,18 +22,19 @@ export interface StrictnessStepProps {
 
 export function StrictnessStep({ initialData, onNext, onBack }: StrictnessStepProps) {
   const form = useForm<StrictnessFormData>({
-    resolver: zodResolver(strictnessSchema),
+    resolver: zodResolver(strictnessSchema) as Resolver<StrictnessFormData>,
     defaultValues: {
-      profile_name: initialData?.profile_name ?? "Diario",
-      block_traces: initialData?.block_traces ?? false,
-      block_same_line: initialData?.block_same_line ?? false,
-      e_numbers_uncertain: initialData?.e_numbers_uncertain ?? "warn",
-      min_model_confidence: initialData?.min_model_confidence ?? 0.85,
-      residual_protein_ppm: initialData?.residual_protein_ppm ?? null,
-      pediatric_mode: initialData?.pediatric_mode ?? false,
-      anaphylaxis_mode: initialData?.anaphylaxis_mode ?? false,
-      notes: initialData?.notes ?? "",
+      profile_name: initialData?.profile_name || "Diario",
+      block_traces: initialData?.block_traces || false,
+      block_same_line: initialData?.block_same_line || false,
+      e_numbers_uncertain: initialData?.e_numbers_uncertain || "warn",
+      min_model_confidence: initialData?.min_model_confidence || 0.85,
+      residual_protein_ppm: initialData?.residual_protein_ppm || null,
+      pediatric_mode: initialData?.pediatric_mode || false,
+      anaphylaxis_mode: initialData?.anaphylaxis_mode || false,
+      notes: initialData?.notes || "",
     },
+    mode: "onChange",
   });
 
   const handleSubmit = (data: StrictnessFormData) => {

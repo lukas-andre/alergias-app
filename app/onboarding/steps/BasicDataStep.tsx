@@ -9,7 +9,7 @@
 
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { User, FileText, Baby } from "lucide-react";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -26,12 +26,13 @@ export interface BasicDataStepProps {
 
 export function BasicDataStep({ initialData, onNext, onBack }: BasicDataStepProps) {
   const form = useForm<BasicDataFormData>({
-    resolver: zodResolver(basicDataSchema),
+    resolver: zodResolver(basicDataSchema) as Resolver<BasicDataFormData>,
     defaultValues: {
-      display_name: initialData?.display_name ?? "",
-      notes: initialData?.notes ?? "",
-      pregnant: initialData?.pregnant ?? false,
+      display_name: initialData?.display_name || "",
+      notes: initialData?.notes || "",
+      pregnant: initialData?.pregnant || false,
     },
+    mode: "onChange",
   });
 
   const handleSubmit = (data: BasicDataFormData) => {

@@ -8,7 +8,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
+import { useForm, useFieldArray, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, AlertOctagon, Trash2 } from "lucide-react";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -33,10 +33,11 @@ export function IntolerancesStep({ initialData, onNext, onBack, onSkip }: Intole
   const [error, setError] = useState<string | null>(null);
 
   const form = useForm<IntolerancesFormData>({
-    resolver: zodResolver(intolerancesSchema),
+    resolver: zodResolver(intolerancesSchema) as Resolver<IntolerancesFormData>,
     defaultValues: {
-      intolerances: initialData?.intolerances ?? [],
+      intolerances: initialData?.intolerances || [],
     },
+    mode: "onChange",
   });
 
   const { fields, append, remove } = useFieldArray({

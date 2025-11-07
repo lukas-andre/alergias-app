@@ -398,6 +398,13 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      decide_e_number: {
+        Args: {
+          p_user_id: string;
+          p_code: string;
+        };
+        Returns: Json;
+      };
       get_effective_strictness: {
         Args: {
           p_user_id: string;
