@@ -80,7 +80,7 @@ const [result, setResult] = useState<AnalysisPayload | null>(null);
 
       resetState();
       setStatus("uploading");
-      setStatusLabel("Cargando imagen…");
+      setStatusLabel("Preparando escaneo...");
 
       revokePreview();
       const objectUrl = URL.createObjectURL(file);
@@ -96,7 +96,7 @@ const [result, setResult] = useState<AnalysisPayload | null>(null);
         currentJob.current = { abortController: controller };
 
         setStatus("processing");
-        setStatusLabel("Consultando OpenAI…");
+        setStatusLabel("Leyendo ingredientes...");
 
         const formData = new FormData();
         formData.append("image", file);
@@ -113,7 +113,7 @@ const [result, setResult] = useState<AnalysisPayload | null>(null);
 
         if (!response.ok) {
           const message = await response.text();
-          throw new Error(message || "Error desconocido al llamar a OpenAI.");
+          throw new Error(message || "Error al analizar la imagen.");
         }
 
         const payload = (await response.json()) as AnalysisPayload;
@@ -180,10 +180,10 @@ const [result, setResult] = useState<AnalysisPayload | null>(null);
       </header>
 
       <div className="scan-intro">
-        <h1>Escanea ingredientes</h1>
+        <h1>Escanea Etiquetas</h1>
         <p>
-          Captura la etiqueta del producto y obtén la lista estructurada de
-          ingredientes mediante la API de OpenAI. Nada se guarda en servidores propios.
+          Captura la etiqueta de cualquier producto. Verificamos cada ingrediente
+          contra tu perfil de alergias y te mostramos si es seguro para ti.
         </p>
       </div>
 

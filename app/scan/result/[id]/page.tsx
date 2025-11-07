@@ -20,6 +20,10 @@ import { AnalysisResult } from "@/components/AnalysisResult";
 import { useSupabase } from "@/components/SupabaseProvider";
 import { getExtractionById } from "@/lib/supabase/queries/extractions";
 import { evaluateRisk } from "@/lib/risk/evaluate";
+import {
+  humanizeTimestamp,
+  confidenceToQuality,
+} from "@/lib/utils/humanize-copy";
 import type { IngredientsResult } from "@/lib/openai/vision";
 import type { ProfilePayload, RiskAssessment } from "@/lib/risk/types";
 
@@ -148,15 +152,11 @@ export default function ScanResultPage() {
       <header className="mb-8 flex items-center justify-between pb-4 border-b">
         <div>
           <h1 className="font-display text-3xl font-bold text-neutral-900 mb-2">
-            Resultado del Análisis
+            Análisis de Etiqueta
           </h1>
           {metadata && (
             <p className="text-sm text-neutral-600">
-              Escaneado el{" "}
-              {new Date(metadata.created_at).toLocaleString("es-CL", {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
+              {humanizeTimestamp(metadata.created_at)}
             </p>
           )}
         </div>
@@ -173,10 +173,10 @@ export default function ScanResultPage() {
         status="succeeded"
         result={{
           data: analysis,
-          tokensUSD: 0,
-          usage: null,
+          tokensUSD: undefined,
+          usage: undefined,
           estimatedCost: null,
-          model: "gpt-4o-mini",
+          model: undefined,
           profile: profile,
           risk: risk,
         }}
@@ -191,33 +191,19 @@ export default function ScanResultPage() {
           </h2>
           <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <dt className="text-sm font-medium text-neutral-600">Fecha</dt>
+              <dt className="text-sm font-medium text-neutral-600">Escaneado</dt>
               <dd className="text-sm text-neutral-900">
-                {new Date(metadata.created_at).toLocaleDateString("es-CL", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+                {humanizeTimestamp(metadata.created_at)}
               </dd>
             </div>
             {metadata.model_confidence !== null && (
               <div>
                 <dt className="text-sm font-medium text-neutral-600">
-                  Confianza del Modelo
+                  Calidad del escaneo
                 </dt>
                 <dd className="text-sm text-neutral-900">
-                  {(metadata.model_confidence * 100).toFixed(1)}%
-                </dd>
-              </div>
-            )}
-            {metadata.label_hash && (
-              <div>
-                <dt className="text-sm font-medium text-neutral-600">Hash de Etiqueta</dt>
-                <dd className="text-sm font-mono text-neutral-900">
-                  {metadata.label_hash.substring(0, 12)}...
+                  {confidenceToQuality(metadata.model_confidence).emoji}{" "}
+                  {confidenceToQuality(metadata.model_confidence).label}
                 </dd>
               </div>
             )}

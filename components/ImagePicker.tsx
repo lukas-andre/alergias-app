@@ -43,7 +43,7 @@ export function ImagePicker({
   return (
     <section className="image-picker">
       <header>
-        <h2>1. Captura o sube una foto</h2>
+        <h2>Selecciona una Foto</h2>
         <p>Necesitamos una imagen clara de la tabla de ingredientes.</p>
       </header>
 
