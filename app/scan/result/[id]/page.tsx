@@ -155,10 +155,10 @@ export default function ScanResultPage() {
   const previewUrl = imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-teal-50">
+    <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50" style={{ width: '100%', maxWidth: '100%', margin: 0 }}>
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
-        <header className="mb-8 flex items-center justify-between pb-4 border-b border-neutral-200">
+        <header className="mb-8 flex items-center justify-between pb-4">
           <div>
             <h1 className="font-display text-3xl font-bold text-neutral-900 mb-2">
               Análisis de Etiqueta

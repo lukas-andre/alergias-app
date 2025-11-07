@@ -162,10 +162,10 @@ const [result, setResult] = useState<AnalysisPayload | null>(null);
   }, [abortCurrentJob, revokePreview]);
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-teal-50">
+    <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50" style={{ width: '100%', maxWidth: '100%', margin: 0 }}>
       <div className="container mx-auto px-4 py-6 max-w-7xl">
         {/* Header with Navigation */}
-        <header className="flex items-center justify-between mb-8 pb-4 border-b border-neutral-200">
+        <header className="flex items-center justify-between mb-8">
           <Link href="/">
             <Button variant="ghost" size="sm" className="gap-2">
               <ArrowLeft className="w-4 h-4" />
