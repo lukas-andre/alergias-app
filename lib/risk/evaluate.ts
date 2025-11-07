@@ -93,9 +93,20 @@ function detectSameLineTokens(textSources: string[]): string[] {
   return Array.from(new Set(tokens));
 }
 
+export type ENumberPolicy = {
+  code: string;
+  policy: "allow" | "warn" | "block" | "unknown";
+  name_es?: string;
+  linked_allergens?: string[];
+  matched_allergens?: string[];
+  residual_protein_risk?: boolean;
+  reason?: string;
+};
+
 export function evaluateRisk(
   analysis: IngredientsResult,
   profile: ProfilePayload | null,
+  eNumberPolicies: ENumberPolicy[] = [],
 ): RiskAssessment {
   const reasons: RiskReason[] = [];
   let risk: RiskLevel = "low";
@@ -210,6 +221,33 @@ export function evaluateRisk(
     });
     risk = compareRisk(risk, "medium");
   }
+
+  // Process E-number policies
+  eNumberPolicies.forEach((ePolicy) => {
+    if (ePolicy.policy === "block") {
+      reasons.push({
+        type: "e_number_uncertain",
+        token: `${ePolicy.code} (${ePolicy.name_es || "E-number"})`,
+        allergen: ePolicy.matched_allergens?.join(", "),
+      });
+      risk = compareRisk(risk, "high");
+    } else if (ePolicy.policy === "warn") {
+      reasons.push({
+        type: "e_number_uncertain",
+        token: `${ePolicy.code} (${ePolicy.name_es || "E-number"})`,
+        allergen: ePolicy.matched_allergens?.join(", "),
+      });
+      risk = compareRisk(risk, "medium");
+    } else if (ePolicy.policy === "unknown") {
+      // Unknown E-numbers are treated as medium risk
+      reasons.push({
+        type: "e_number_uncertain",
+        token: `${ePolicy.code} (desconocido)`,
+      });
+      risk = compareRisk(risk, "medium");
+    }
+    // "allow" policy doesn't add reasons
+  });
 
   const uniqueReasons = reasons.filter(
     (reason, index, self) =>

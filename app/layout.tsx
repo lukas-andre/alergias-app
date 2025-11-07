@@ -5,6 +5,7 @@ import { Inter, Sora } from "next/font/google";
 
 import SupabaseProvider from "@/components/SupabaseProvider";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { Toaster } from "@/components/ui/sonner";
 
 /**
  * Google Fonts Configuration
@@ -46,6 +47,7 @@ export default async function RootLayout({
     <html lang="es" className={`${inter.variable} ${sora.variable}`}>
       <body className="font-sans">
         <SupabaseProvider initialSession={session}>{children}</SupabaseProvider>
+        <Toaster />
       </body>
     </html>
   );

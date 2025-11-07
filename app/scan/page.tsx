@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { UserCircle2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ type RequestJob = {
 };
 
 export default function ScanPage() {
+  const router = useRouter();
   const [status, setStatus] = useState<AnalysisStatus>("idle");
   const [statusLabel, setStatusLabel] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -117,6 +119,13 @@ const [result, setResult] = useState<AnalysisPayload | null>(null);
         const payload = (await response.json()) as AnalysisPayload;
         if (jobId.current !== runId) return;
 
+        // If extraction_id is returned, redirect to result page
+        if ("extraction_id" in payload && payload.extraction_id) {
+          router.push(`/scan/result/${payload.extraction_id}`);
+          return;
+        }
+
+        // Otherwise show result inline (for non-authenticated users)
         setResult(payload);
         setStatus("succeeded");
         setStatusLabel("Resultado listo");
