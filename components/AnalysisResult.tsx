@@ -82,6 +82,19 @@ export function AnalysisResult({
   );
 }
 
+/**
+ * Normalize allergen key for matching
+ * Same logic as lib/risk/evaluate.ts to ensure consistency
+ */
+function normalizeKey(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_|_$/g, "");
+}
+
 function renderBody({
   error,
   result,
@@ -167,8 +180,16 @@ function renderBody({
     case "succeeded":
       if (!result) return null;
 
-      const { data, usage, tokensUSD, estimatedCost, model, risk } = result;
+      const { data, usage, tokensUSD, estimatedCost, model, risk, profile } = result;
       const quality = confidenceToQuality(data.confidence);
+
+      // Create set of normalized user allergen keys for matching
+      const userAllergenKeys = new Set<string>();
+      if (profile?.allergens) {
+        profile.allergens.forEach((allergen) => {
+          userAllergenKeys.add(normalizeKey(allergen.key));
+        });
+      }
 
       return (
         <div className="space-y-6">
@@ -211,21 +232,33 @@ function renderBody({
                 Alérgenos Detectados
               </CardTitle>
               <CardDescription className="text-danger-dark/80">
-                Alérgenos encontrados en el análisis
+                {profile
+                  ? "🔴 Rojo = Match con tu perfil | 🟡 Amarillo = Informativo (no afecta tu perfil)"
+                  : "Alérgenos encontrados en el análisis"
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
               {data.detected_allergens.length ? (
                 <div className="flex flex-wrap gap-2">
-                  {data.detected_allergens.map((item, index) => (
-                    <Badge
-                      key={`${item}-${index}`}
-                      variant="destructive"
-                      className="bg-danger text-white px-3 py-1.5 text-sm font-semibold"
-                    >
-                      {item}
-                    </Badge>
-                  ))}
+                  {data.detected_allergens.map((item, index) => {
+                    // Check if this allergen matches user profile
+                    const isUserAllergen = userAllergenKeys.has(normalizeKey(item));
+
+                    return (
+                      <Badge
+                        key={`${item}-${index}`}
+                        variant={isUserAllergen ? "destructive" : "default"}
+                        className={
+                          isUserAllergen
+                            ? "bg-danger text-white px-3 py-1.5 text-sm font-semibold"
+                            : "bg-warning text-warning-dark px-3 py-1.5 text-sm font-semibold border-warning"
+                        }
+                      >
+                        {item}
+                      </Badge>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-sm text-accent-fresh-dark font-medium">
@@ -289,12 +322,6 @@ function renderBody({
               </CardContent>
             </Card>
           )}
-
-          {/* Quality Badge - Compact inline display */}
-          <div className="flex items-center justify-center gap-2 text-sm text-neutral-600">
-            <span>{quality.emoji}</span>
-            <span className="font-medium">{quality.label}</span>
-          </div>
         </div>
       );
     default:

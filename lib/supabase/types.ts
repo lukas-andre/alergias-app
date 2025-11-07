@@ -395,6 +395,116 @@ export type Database = {
           }
         ];
       };
+      extractions: {
+        Row: {
+          id: string;
+          user_id: string;
+          origin: "label" | "menu" | "diary";
+          raw_text: string | null;
+          raw_json: Json | null;
+          ocr_confidence: number | null;
+          vision_confidence: number | null;
+          model_confidence: number | null;
+          final_confidence: number | null;
+          source_ref: string | null;
+          label_hash: string | null;
+          image_base64: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          origin: "label" | "menu" | "diary";
+          raw_text?: string | null;
+          raw_json?: Json | null;
+          ocr_confidence?: number | null;
+          vision_confidence?: number | null;
+          model_confidence?: number | null;
+          final_confidence?: number | null;
+          source_ref?: string | null;
+          label_hash?: string | null;
+          image_base64?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          origin?: "label" | "menu" | "diary";
+          raw_text?: string | null;
+          raw_json?: Json | null;
+          ocr_confidence?: number | null;
+          vision_confidence?: number | null;
+          model_confidence?: number | null;
+          final_confidence?: number | null;
+          source_ref?: string | null;
+          label_hash?: string | null;
+          image_base64?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "extractions_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "user_profiles";
+            referencedColumns: ["user_id"];
+          }
+        ];
+      };
+      extraction_tokens: {
+        Row: {
+          id: string;
+          extraction_id: string;
+          surface: string;
+          canonical: string | null;
+          type: "ingredient" | "allergen" | "trace" | "claim" | "e_code" | "note";
+          confidence: number | null;
+          span: string | null;
+          allergen_id: string | null;
+          e_code: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          extraction_id: string;
+          surface: string;
+          canonical?: string | null;
+          type: "ingredient" | "allergen" | "trace" | "claim" | "e_code" | "note";
+          confidence?: number | null;
+          span?: string | null;
+          allergen_id?: string | null;
+          e_code?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          extraction_id?: string;
+          surface?: string;
+          canonical?: string | null;
+          type?: "ingredient" | "allergen" | "trace" | "claim" | "e_code" | "note";
+          confidence?: number | null;
+          span?: string | null;
+          allergen_id?: string | null;
+          e_code?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "extraction_tokens_extraction_id_fkey";
+            columns: ["extraction_id"];
+            referencedRelation: "extractions";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "extraction_tokens_allergen_id_fkey";
+            columns: ["allergen_id"];
+            referencedRelation: "allergen_types";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {

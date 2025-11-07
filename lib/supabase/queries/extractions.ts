@@ -108,7 +108,10 @@ export async function insertTokens(
  * @param supabase - Supabase client
  * @param extractionId - Extraction UUID
  * @param userId - User ID (for RLS)
- * @returns Extraction with tokens
+ * @returns Extraction with tokens (includes image_base64 if stored)
+ *
+ * TODO: Migrate to Supabase Storage - image_base64 is technical debt
+ * Future: Use source_ref for storage URL instead of base64
  */
 export async function getExtractionById(
   supabase: SupabaseClient<Database>,
@@ -118,7 +121,7 @@ export async function getExtractionById(
   extraction: ExtractionRow;
   tokens: (TokenRow & { allergen_name?: string })[];
 } | null> {
-  // Fetch extraction
+  // Fetch extraction (includes image_base64)
   const { data: extraction, error: extractionError } = await supabase
     .from("extractions")
     .select("*")

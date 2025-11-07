@@ -193,7 +193,8 @@ export async function POST(request: Request) {
           model_confidence: data.confidence,
           final_confidence: riskAssessment?.confidence ?? data.confidence,
           label_hash: labelHash,
-          source_ref: null, // Could store to Supabase Storage in future
+          source_ref: null, // TODO: Migrate to Supabase Storage bucket (label-images)
+          image_base64: base64, // TEMPORARY: Store as base64 until Storage migration
         });
 
         extractionId = extraction.id;

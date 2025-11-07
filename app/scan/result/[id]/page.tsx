@@ -38,6 +38,7 @@ export default function ScanResultPage() {
   const [analysis, setAnalysis] = useState<IngredientsResult | null>(null);
   const [risk, setRisk] = useState<RiskAssessment | null>(null);
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [metadata, setMetadata] = useState<{
     created_at: string;
     label_hash: string | null;
@@ -86,6 +87,9 @@ export default function ScanResultPage() {
         };
 
         setAnalysis(ingredientsResult);
+
+        // Set image base64 (if available)
+        setImageBase64(result.extraction.image_base64 || null);
 
         // Set metadata
         setMetadata({
@@ -146,9 +150,9 @@ export default function ScanResultPage() {
     );
   }
 
-  // TODO: Add image_url field to extraction table and fetch it here
-  // For now, we don't display the scanned photo in saved results
-  const previewUrl = null;
+  // Reconstruct data URL from base64 (if available)
+  // TODO: Migrate to Supabase Storage - use source_ref for storage URL instead
+  const previewUrl = imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : null;
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-accent-teal-50">
