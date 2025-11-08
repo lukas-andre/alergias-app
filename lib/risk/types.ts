@@ -34,7 +34,7 @@ export type AllergenVia =
   | "icon"              // Front-of-pack badge/icon
   | "derived";          // Derived/implied (e.g., E-number origin)
 
-export interface RiskReasonV2 {
+export interface RiskReason {
   kind: RiskReasonKind;
   via?: AllergenVia;           // For allergen reasons
   mentionIds: number[];         // References to Mention indices
@@ -83,11 +83,11 @@ export interface MatchedENumber {
   mentionIds: number[];
 }
 
-export interface RiskAssessmentV2 {
+export interface RiskAssessment {
   level: RiskLevel;
   decision: RiskDecision;
   confidence: number;
-  reasons: RiskReasonV2[];
+  reasons: RiskReason[];
   matched: {
     allergens: MatchedAllergen[];
     diets: MatchedDiet[];

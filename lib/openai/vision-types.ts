@@ -1,5 +1,5 @@
 /**
- * Vision API v2 - Structured Mentions & Evidence
+ * Vision API - Structured Mentions & Evidence
  *
  * Enhanced JSON schema that provides:
  * - Detailed mentions with type, section, offset for highlighting
@@ -49,7 +49,7 @@ export interface Quality {
   confidence: number;                 // 0.0 - 1.0
 }
 
-export interface IngredientsResultV2 {
+export interface IngredientsResult {
   ocr_text: string;
   language: string;
   quality: Quality;
@@ -59,8 +59,8 @@ export interface IngredientsResultV2 {
   confidence: number;                 // Overall confidence 0.0 - 1.0
 }
 
-export interface VisionJSONResponseV2 {
-  data: IngredientsResultV2;
+export interface VisionJSONResponse {
+  data: IngredientsResult;
   tokensUSD?: number;
   usage?: {
     prompt_tokens: number;

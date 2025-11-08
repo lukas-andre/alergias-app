@@ -1,0 +1,3 @@
+- agregar crop vertical! muchas veces las gente utilizara la camara para el celular entonce esto debe ser lo prinicpal soportado ahora como que deja cortar a un cuadrado, na, tiene que permiter rectaungos y ser mas flexible! mejorar esto.
+- en el detalle del scan no se ve la imagen hasta que le haces click, una vez le haces click si se ve en grande, pero debería verse la miniatura igual.
+- Empezar a usar un bucket de supabase! que la IA nos ayude a configurar y todo

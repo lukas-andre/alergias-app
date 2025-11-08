@@ -1921,3 +1921,185 @@ const previewUrl = imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : null;
 - Supabase Storage docs: https://supabase.com/docs/guides/storage
 
 ---
+
+## Section 20: OpenAI Prompt Improvements & Confidence Display TODO (2025-01-07)
+
+**Status:** 🔴 TODO - Documented for next session
+**Priority:** P0 (affects quality of extraction)
+
+### Issues Discovered
+
+**Test case:** Scanned "Cheetos Palomitas de Maíz" product label
+
+#### Issue 1: Token Extraction Not Splitting Compound Ingredients
+
+**Problem:** OpenAI returns nested ingredients as single long token instead of splitting them.
+
+**Example - Current behavior:**
+```json
+{
+  "surface": "sazonador (maltodextrina, ácido cítrico, mezcla de chiles en polvo, sal yodada, dextrosa, amarillo ocaso FCF [colorante artificial], rojo allura AC [colorante artificial], saborizante natural chile, dióxido de silicio [antiaglomerante], proteína hidrolizada de maíz, goma arábiga, ácido acético, tartrazina [colorante artificial], azul brillante FCF [colorante artificial], sabor artificial a limón)",
+  "canonical": "sazonador (maltodextrina, acido citrico, mezcla de chiles en polvo, sal yodada, dextrosa, amarillo ocaso fcf [colorante artificial], rojo allura ac [colorante artificial], saborizante natural chile, dioxido de silicio [antiaglomerante], proteina hidrolizada de maiz, goma arabiga, acido acetico, tartrazina [colorante artificial], azul brillante fcf [colorante artificial], sabor artificial a limon)",
+  "type": "ingredient"
+}
+```
+
+**Expected behavior:** Split into individual tokens:
+- sazonador
+- maltodextrina
+- ácido cítrico
+- mezcla de chiles en polvo
+- sal yodada
+- dextrosa
+- amarillo ocaso FCF (E110)
+- rojo allura AC (E129)
+- dióxido de silicio (E551)
+- proteína hidrolizada de maíz
+- goma arábiga (E414)
+- ácido acético (E260)
+- tartrazina (E102)
+- azul brillante FCF (E133)
+
+**Root cause:** OpenAI prompt doesn't explicitly instruct to tokenize nested ingredients.
+
+**Solution:**
+1. Update `lib/openai/vision.ts` system prompt (lines 47-93)
+2. Add instruction: "For compound ingredients (e.g., 'sazonador (...)'), extract EACH sub-ingredient as separate item in ingredients array"
+3. Add example in prompt showing nested ingredient extraction
+
+**Files to modify:**
+- `lib/openai/vision.ts` - Update system prompt with tokenization instructions
+
+#### Issue 2: Confidence Always Returns 0.95
+
+**Problem:** Model returns static `0.95` confidence regardless of actual image quality.
+
+**Test evidence:**
+- Low-quality blurry image → confidence: 0.95
+- High-quality clear image → confidence: 0.95
+- All extractions in database show 0.95
+
+**Root cause:** Prompt doesn't ask model to assess image quality factors:
+- Lighting conditions
+- Focus/blur
+- Text legibility
+- Partial occlusion
+- Label wear/damage
+
+**Solution:**
+1. Update prompt to explicitly ask for quality assessment
+2. Provide guidance on confidence scoring:
+   - 0.95-1.0: Perfect lighting, clear text, complete label
+   - 0.85-0.94: Good quality, minor issues
+   - 0.70-0.84: Readable but challenging (blur, poor lighting)
+   - 0.50-0.69: Partial reads, significant quality issues
+   - <0.50: Very poor quality, low confidence extraction
+
+**Files to modify:**
+- `lib/openai/vision.ts` - Add quality assessment instructions to prompt
+
+#### Issue 3: Confidence Display Shows Stars Without Percentage
+
+**Problem:** UI shows "⭐⭐⭐⭐⭐ Excelente" but user has configured `min_model_confidence` threshold in their strictness profile - not displayed.
+
+**User quote:** "no mostremos estrellas mostremos estrellas + porcentaje ya que el usuario tiene selecciona su porcentaje de confianza"
+
+**Current display:**
+```
+Calidad del escaneo
+⭐⭐⭐⭐⭐ Excelente
+```
+
+**Expected display:**
+```
+Calidad del escaneo
+⭐⭐⭐⭐⭐ Excelente (95%)
+```
+
+**Additionally:** Show user's configured threshold for context:
+```
+Calidad del escaneo
+⭐⭐⭐⭐⭐ Excelente (95%)
+Tu umbral mínimo: 70%
+```
+
+**Files to modify:**
+- `lib/utils/humanize-copy.ts` - Update `confidenceToQuality()` to include percentage
+- `components/AnalysisResult.tsx` - Display percentage + user threshold
+
+### Full Token Data (Test Case)
+
+**Extraction ID:** `489d4aa6-cc04-49fa-a698-112f417714c3`
+
+**Tokens extracted:**
+1. "Maíz" (allergen) - ✅ Correctly identified
+2. "aceite de palma" (ingredient) - ✅ OK
+3. "Maíz palomero" (ingredient) - ✅ OK
+4. "sal yodada" (ingredient) - ✅ OK
+5. "sazonador (...)" (ingredient) - ❌ Should be split into 14+ tokens
+
+**Allergen matching issue:**
+- "Maíz" token has `allergen_id: null` (not linked to allergen_types table)
+- Should query `allergen_types` for match during tokenization
+- See `app/api/analyze/route.ts` lines 220-227 for allergen matching logic
+
+### Implementation Plan (Next Session)
+
+**Task 1: Fix OpenAI Prompt (30 min)**
+- [ ] Update `lib/openai/vision.ts` system prompt
+- [ ] Add nested ingredient splitting instruction
+- [ ] Add quality assessment guidelines with examples
+- [ ] Test with 3 sample images (high/medium/low quality)
+
+**Task 2: Improve Tokenization (30 min)**
+- [ ] Post-process OpenAI response to split compound ingredients
+- [ ] Regex pattern: `/\([^)]+\)/g` to detect nested parentheses
+- [ ] Recursive split and flatten into individual tokens
+- [ ] Preserve E-number detection in sub-ingredients
+
+**Task 3: Fix Confidence Display (15 min)**
+- [ ] Update `confidenceToQuality()` to return percentage
+- [ ] Add user threshold display in AnalysisResult
+- [ ] Format: "⭐⭐⭐⭐⭐ Excelente (95%) · Tu umbral: 70%"
+
+**Task 4: Fix Allergen Linking (15 min)**
+- [ ] Verify allergen_types query in tokenization (route.ts:220-227)
+- [ ] Add synonym matching for "Maíz" → allergen_types.synonyms
+- [ ] Test with maíz, trigo, soja, leche
+
+**Total estimated effort:** 1.5 hours
+
+### Testing Checklist
+
+- [ ] Upload Cheetos image again → verify nested ingredients split
+- [ ] Upload blurry image → confidence < 0.85
+- [ ] Upload perfect image → confidence > 0.95
+- [ ] Check AnalysisResult displays percentage + threshold
+- [ ] Verify "Maíz" token links to allergen_types.id
+
+### Related Files
+
+**OpenAI Integration:**
+- `lib/openai/vision.ts` - System prompt (lines 47-93)
+- `lib/openai/cost-estimator.ts` - No changes needed
+
+**Tokenization:**
+- `app/api/analyze/route.ts` - Lines 204-244 (token insertion)
+- `lib/supabase/queries/extractions.ts` - `normalizeTokenText()` helper
+
+**UI Display:**
+- `components/AnalysisResult.tsx` - Confidence display (line 293-297)
+- `lib/utils/humanize-copy.ts` - `confidenceToQuality()` function
+
+### Notes
+
+- Cheetos test revealed real-world prompt limitations
+- User expects granular ingredient breakdown for allergen matching
+- Confidence score critical for risk evaluation (feeds into `evaluateRisk()`)
+- E-number detection must work in nested ingredients (E110, E129, E102, E133, E260, E414, E551 all in sazonador)
+
+---
+
+
+- Agregar warning de, recuerda que la etiqueta de los ingredientes pueden cambiar, para fomentar el scaneo.
+- Agregar un lugar para luego del escaneado ponerle un nombre si es que no se puede deducir que es.

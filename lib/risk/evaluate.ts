@@ -1,6 +1,30 @@
-import type { IngredientsResult } from "@/lib/openai/vision";
+/**
+ * Risk Evaluation - Explainable & Evidence-Based
+ *
+ * Enhanced risk assessment that:
+ * - Uses structured mentions from Vision API
+ * - Provides detailed evidence for each decision
+ * - Crosses with diets (celiac → gluten, vegan → milk/eggs)
+ * - Crosses with intolerances (FODMAP, lactose)
+ * - Applies strictness policies per-allergen
+ * - Returns structured matches with confidence
+ */
 
-import type { ProfilePayload, RiskAssessment, RiskLevel, RiskReason } from "./types";
+import type { IngredientsResult, Mention, DetectedAllergen } from "@/lib/openai/vision-types";
+import type {
+  ProfilePayload,
+  RiskAssessment,
+  RiskReason,
+  RiskLevel,
+  RiskDecision,
+  MatchedAllergen,
+  MatchedDiet,
+  MatchedIntolerance,
+  MatchedENumber,
+  AllergenVia,
+} from "./types";
+import type { ENumberPolicy } from "./evaluate";
+import { DIET_BLOCKS, INTOLERANCE_TRIGGERS } from "@/lib/constants/dietary-rules";
 
 const RISK_ORDER: RiskLevel[] = ["low", "medium", "high"];
 
@@ -17,6 +41,24 @@ function compareRisk(a: RiskLevel, b: RiskLevel): RiskLevel {
   return RISK_ORDER[Math.max(RISK_ORDER.indexOf(a), RISK_ORDER.indexOf(b))] ?? "low";
 }
 
+function decisionToRisk(decision: RiskDecision): RiskLevel {
+  switch (decision) {
+    case "block":
+      return "high";
+    case "warn":
+      return "medium";
+    case "allow":
+    default:
+      return "low";
+  }
+}
+
+
+/**
+ * Compute effective strictness for a specific allergen
+ *
+ * Applies per-allergen overrides on top of base strictness profile
+ */
 function computeEffectiveStrictness(
   profile: ProfilePayload,
   allergenKey: string,
@@ -49,229 +91,376 @@ function computeEffectiveStrictness(
   };
 }
 
-function detectTraceTokens(textSources: string[]): string[] {
-  const tokens: string[] = [];
-  const patterns = [
-    /puede\s+contener[^.]*\./gi,
-    /puede\s+contener[^,\n]*/gi,
-    /trazas\s+de[^.]*\./gi,
-    /trazas\s+de[^,\n]*/gi,
-  ];
-
-  textSources.forEach((source) => {
-    const lower = source.toLowerCase();
-    patterns.forEach((pattern) => {
-      const matches = lower.match(pattern);
-      if (matches) {
-        tokens.push(...matches);
-      }
-    });
-  });
-
-  return Array.from(new Set(tokens));
-}
-
-function detectSameLineTokens(textSources: string[]): string[] {
-  const tokens: string[] = [];
-  const patterns = [
-    /misma\s+l[íi]nea/gi,
-    /instalaci[oó]n\s+compartida/gi,
-    /planta\s+compartida/gi,
-    /compartid[ao]s?\s+con/gi,
-  ];
-
-  textSources.forEach((source) => {
-    const lower = source.toLowerCase();
-    patterns.forEach((pattern) => {
-      const matches = lower.match(pattern);
-      if (matches) {
-        tokens.push(...matches);
-      }
-    });
-  });
-
-  return Array.from(new Set(tokens));
-}
-
-export type ENumberPolicy = {
-  code: string;
-  policy: "allow" | "warn" | "block" | "unknown";
-  name_es?: string;
-  linked_allergens?: string[];
-  matched_allergens?: string[];
-  residual_protein_risk?: boolean;
-  reason?: string;
-};
-
+/**
+ * Main risk evaluation function
+ *
+ * Uses structured mentions from Vision API to provide explainable,
+ * evidence-based risk assessment.
+ */
 export function evaluateRisk(
   analysis: IngredientsResult,
   profile: ProfilePayload | null,
   eNumberPolicies: ENumberPolicy[] = [],
 ): RiskAssessment {
   const reasons: RiskReason[] = [];
-  let risk: RiskLevel = "low";
+  let level: RiskLevel = "low";
 
+  // No profile case
   if (!profile || !profile.strictness) {
     return {
-      risk: "low",
+      level: "low",
+      decision: "allow",
       confidence: analysis.confidence,
       reasons: [
         {
-          type: "no_profile",
-          token: "Perfil de Supabase no disponible; se asumió riesgo bajo.",
+          kind: "low_confidence",
+          mentionIds: [],
+          rule: "no_profile",
+          confidence: 0,
+          evidence: "Perfil no disponible. Se asumió riesgo bajo.",
         },
       ],
+      matched: {
+        allergens: [],
+        diets: [],
+        intolerances: [],
+        enumbers: [],
+      },
       actions: ["guardar"],
     };
   }
 
+  // Build normalized allergen map
   const allergenSeverity = new Map<string, number>();
+  const allergenKeyMap = new Map<string, string>(); // normalized -> original
   profile.allergens.forEach((item) => {
-    allergenSeverity.set(item.key, item.severity ?? 0);
+    const normalized = normalizeKey(item.key);
+    allergenSeverity.set(normalized, item.severity ?? 0);
+    allergenKeyMap.set(normalized, item.key);
   });
 
-  const normalizedKeys = new Map<string, string>();
-  Array.from(allergenSeverity.keys()).forEach((key) => {
-    normalizedKeys.set(normalizeKey(key), key);
+  // Build diet set
+  const dietKeys = new Set<string>(profile.diets.map(normalizeKey));
+
+  // Build intolerance set
+  const intoleranceKeys = new Set<string>(profile.intolerances.map((i) => normalizeKey(i.key)));
+
+  // Matched results
+  const matchedAllergens: MatchedAllergen[] = [];
+  const matchedDiets: MatchedDiet[] = [];
+  const matchedIntolerances: MatchedIntolerance[] = [];
+  const matchedENumbers: MatchedENumber[] = [];
+
+  // ============================================================================
+  // 1. ALLERGEN MATCHES
+  // ============================================================================
+
+  const allergenMatches = new Map<string, {
+    severity: number;
+    vias: AllergenVia[];
+    mentionIds: number[];
+    confidences: number[];
+  }>();
+
+  analysis.mentions.forEach((mention, idx) => {
+    mention.implies_allergens.forEach((allergenRaw) => {
+      const allergenNorm = normalizeKey(allergenRaw);
+      const originalKey = allergenKeyMap.get(allergenNorm);
+
+      if (!originalKey) return; // Not in user profile
+
+      const severity = allergenSeverity.get(allergenNorm) ?? 0;
+      const effective = computeEffectiveStrictness(profile, originalKey);
+
+      // Determine via
+      let via: AllergenVia = "explicit";
+      if (mention.section === "may_contain") {
+        via = "may_contain";
+      } else if (mention.type === "icon" && mention.section === "front_label") {
+        via = "icon";
+      }
+
+      // Track match
+      if (!allergenMatches.has(allergenNorm)) {
+        allergenMatches.set(allergenNorm, {
+          severity,
+          vias: [],
+          mentionIds: [],
+          confidences: [],
+        });
+      }
+
+      const match = allergenMatches.get(allergenNorm)!;
+      if (!match.vias.includes(via)) {
+        match.vias.push(via);
+      }
+      match.mentionIds.push(idx);
+      match.confidences.push(mention.implies_allergens.length > 0 ? 0.9 : 0.7);
+
+      // Determine decision
+      let decision: RiskDecision = "warn";
+      let rule = "allergen.inline.warn";
+
+      if (via === "may_contain") {
+        if (effective?.block_traces || effective?.anaphylaxis_mode) {
+          decision = "block";
+          rule = "allergen.traces.block";
+        } else {
+          decision = "warn";
+          rule = "allergen.traces.warn";
+        }
+      } else if (via === "icon") {
+        decision = "block";
+        rule = "allergen.icon.block";
+      } else {
+        // explicit
+        if (severity >= 3 || effective?.anaphylaxis_mode) {
+          decision = "block";
+          rule = "allergen.inline.block";
+        } else if (severity >= 2) {
+          decision = "block";
+          rule = "allergen.inline.block";
+        } else if (effective?.block_same_line && mention.section === "ingredients") {
+          decision = "block";
+          rule = "allergen.same_line.block";
+        } else {
+          decision = "warn";
+          rule = "allergen.inline.warn";
+        }
+      }
+
+      const confidence = analysis.detected_allergens.find(
+        (da) => normalizeKey(da.key) === allergenNorm
+      )?.confidence ?? 0.8;
+
+      reasons.push({
+        kind: "allergen",
+        via,
+        mentionIds: [idx],
+        allergenKey: originalKey,
+        rule,
+        confidence,
+        evidence: `"${mention.surface}" (${mention.section})`,
+      });
+
+      level = compareRisk(level, decisionToRisk(decision));
+    });
   });
 
-  const effectiveStrictnessCache = new Map<string, ReturnType<typeof computeEffectiveStrictness>>();
-  const getEffective = (key: string) => {
-    if (!effectiveStrictnessCache.has(key)) {
-      effectiveStrictnessCache.set(key, computeEffectiveStrictness(profile, key));
+  // Build matched allergens
+  allergenMatches.forEach((match, allergenNorm) => {
+    const originalKey = allergenKeyMap.get(allergenNorm)!;
+    const avgConfidence = match.confidences.reduce((a, b) => a + b, 0) / match.confidences.length;
+
+    // Determine overall decision
+    let overallDecision: RiskDecision = "allow";
+    if (match.vias.includes("icon") || match.vias.includes("explicit")) {
+      overallDecision = match.severity >= 2 ? "block" : "warn";
+    } else if (match.vias.includes("may_contain")) {
+      const effective = computeEffectiveStrictness(profile, originalKey);
+      overallDecision = effective?.block_traces ? "block" : "warn";
     }
-    return effectiveStrictnessCache.get(key);
-  };
 
-  // Handle V1 (string[]) and V2 (object[]) formats for detected_allergens
-  const allergenStrings = Array.isArray(analysis.detected_allergens)
-    ? analysis.detected_allergens.map(a =>
-        typeof a === 'string' ? a : (a as any).key
-      )
-    : [];
+    matchedAllergens.push({
+      key: originalKey,
+      decision: overallDecision,
+      confidence: avgConfidence,
+      severity: match.severity,
+      via: match.vias,
+      mentionIds: match.mentionIds,
+    });
+  });
 
-  const textSources = [
-    analysis.ocr_text ?? "",
-    ...(analysis.warnings ?? []),
-    ...allergenStrings,
-  ];
+  // ============================================================================
+  // 2. DIET RESTRICTIONS
+  // ============================================================================
 
-  const traceTokens = detectTraceTokens(textSources);
-  const sameLineTokens = detectSameLineTokens(textSources);
+  dietKeys.forEach((dietKey) => {
+    const blockedIngredients = DIET_BLOCKS[dietKey] || [];
+    const triggeredMentions: number[] = [];
 
-  allergenStrings.forEach((token) => {
-    const normalized = normalizeKey(token);
-    const matchedKey = normalizedKeys.get(normalized);
-    if (!matchedKey) return;
+    analysis.mentions.forEach((mention, idx) => {
+      mention.implies_allergens.forEach((allergenRaw) => {
+        const allergenNorm = normalizeKey(allergenRaw);
+        if (blockedIngredients.includes(allergenNorm)) {
+          triggeredMentions.push(idx);
 
-    const severity = allergenSeverity.get(matchedKey) ?? 0;
-    const effective = getEffective(matchedKey);
+          reasons.push({
+            kind: "diet",
+            mentionIds: [idx],
+            rule: `diet.${dietKey}.block`,
+            confidence: 0.9,
+            evidence: `"${mention.surface}" bloqueado por dieta ${dietKey}`,
+            dietKey,
+            allergenKey: allergenRaw,
+          });
 
-    reasons.push({
-      type: "contains",
-      token,
-      allergen: matchedKey,
+          level = compareRisk(level, "high");
+        }
+      });
     });
 
-    let level: RiskLevel = severity >= 2 ? "high" : "medium";
-    if (severity >= 3) {
-      level = "high";
-    } else if (severity <= 1 && effective?.pediatric_mode) {
-      level = compareRisk(level, "medium");
+    if (triggeredMentions.length > 0) {
+      matchedDiets.push({
+        key: dietKey,
+        decision: "block",
+        blockedIngredients: [...new Set(
+          analysis.mentions
+            .filter((_, idx) => triggeredMentions.includes(idx))
+            .flatMap((m) => m.implies_allergens)
+        )],
+        mentionIds: triggeredMentions,
+      });
     }
-
-    if (effective?.anaphylaxis_mode) {
-      level = "high";
-    }
-
-    risk = compareRisk(risk, level);
   });
 
-  traceTokens.forEach((token) => {
-    let reasonAllergen: string | undefined;
+  // ============================================================================
+  // 3. INTOLERANCES
+  // ============================================================================
 
-    normalizedKeys.forEach((originalKey, keySlug) => {
-      if (token.includes(keySlug.replace(/_/g, " "))) {
-        reasonAllergen = originalKey;
+  intoleranceKeys.forEach((intoleranceKey) => {
+    const triggers = INTOLERANCE_TRIGGERS[intoleranceKey] || [];
+    const triggeredMentions: number[] = [];
+
+    analysis.mentions.forEach((mention, idx) => {
+      mention.implies_allergens.forEach((allergenRaw) => {
+        const allergenNorm = normalizeKey(allergenRaw);
+        if (triggers.includes(allergenNorm)) {
+          triggeredMentions.push(idx);
+
+          reasons.push({
+            kind: "intolerance",
+            mentionIds: [idx],
+            rule: `intolerance.${intoleranceKey}.warn`,
+            confidence: 0.85,
+            evidence: `"${mention.surface}" puede desencadenar ${intoleranceKey}`,
+            intoleranceKey,
+            allergenKey: allergenRaw,
+          });
+
+          level = compareRisk(level, "medium");
+        }
+      });
+    });
+
+    if (triggeredMentions.length > 0) {
+      matchedIntolerances.push({
+        key: intoleranceKey,
+        decision: "warn",
+        triggeredBy: [...new Set(
+          analysis.mentions
+            .filter((_, idx) => triggeredMentions.includes(idx))
+            .flatMap((m) => m.implies_allergens)
+        )],
+        mentionIds: triggeredMentions,
+      });
+    }
+  });
+
+  // ============================================================================
+  // 4. E-NUMBERS
+  // ============================================================================
+
+  eNumberPolicies.forEach((ePolicy) => {
+    const mentionIds: number[] = [];
+
+    // Find mentions containing this E-number
+    analysis.mentions.forEach((mention, idx) => {
+      if (mention.enumbers.includes(ePolicy.code)) {
+        mentionIds.push(idx);
       }
     });
 
-    const effective = reasonAllergen ? getEffective(reasonAllergen) : null;
-    const escalate =
-      reasonAllergen != null
-        ? Boolean(effective?.block_traces || effective?.anaphylaxis_mode)
-        : profile.strictness?.block_traces ?? false;
-    const level: RiskLevel = escalate ? "high" : "medium";
+    let decision: RiskDecision = "allow";
+    if (ePolicy.policy === "block") {
+      decision = "block";
+      level = compareRisk(level, "high");
+    } else if (ePolicy.policy === "warn") {
+      decision = "warn";
+      level = compareRisk(level, "medium");
+    } else if (ePolicy.policy === "unknown") {
+      const uncertainPolicy = profile.strictness?.e_numbers_uncertain ?? "warn";
+      if (uncertainPolicy === "block") {
+        decision = "block";
+        level = compareRisk(level, "high");
+      } else if (uncertainPolicy === "warn") {
+        decision = "warn";
+        level = compareRisk(level, "medium");
+      }
+    }
 
-    reasons.push({
-      type: "trace",
-      token,
-      allergen: reasonAllergen,
-    });
+    if (decision !== "allow") {
+      reasons.push({
+        kind: "enumber",
+        mentionIds,
+        rule: `enumber.${ePolicy.policy}`,
+        confidence: 0.8,
+        evidence: `${ePolicy.code} (${ePolicy.name_es || "E-number"})`,
+        eNumberCode: ePolicy.code,
+        linkedAllergens: ePolicy.linked_allergens,
+      });
 
-    risk = compareRisk(risk, level);
+      matchedENumbers.push({
+        code: ePolicy.code,
+        decision,
+        policy: ePolicy.policy,
+        nameEs: ePolicy.name_es,
+        linkedAllergens: ePolicy.linked_allergens,
+        reason: ePolicy.reason,
+        mentionIds,
+      });
+    }
   });
 
-  sameLineTokens.forEach((token) => {
-    const level: RiskLevel = profile.strictness?.block_same_line ? "high" : "medium";
-    reasons.push({
-      type: "same_line",
-      token,
-    });
-    risk = compareRisk(risk, level);
-  });
+  // ============================================================================
+  // 5. LOW CONFIDENCE CHECK
+  // ============================================================================
 
-  if ((profile.strictness?.min_model_confidence ?? 0) > analysis.confidence) {
+  const minConfidence = profile.strictness?.min_model_confidence ?? 0.7;
+  if (analysis.quality.confidence < minConfidence) {
     reasons.push({
-      type: "low_confidence",
-      token: `confidence=${analysis.confidence.toFixed(2)}`,
+      kind: "low_confidence",
+      mentionIds: [],
+      rule: "confidence.below_threshold",
+      confidence: analysis.quality.confidence,
+      evidence: `Confianza ${(analysis.quality.confidence * 100).toFixed(0)}% < ${(minConfidence * 100).toFixed(0)}%`,
     });
-    risk = compareRisk(risk, "medium");
+    level = compareRisk(level, "medium");
   }
 
-  // Process E-number policies
-  eNumberPolicies.forEach((ePolicy) => {
-    if (ePolicy.policy === "block") {
-      reasons.push({
-        type: "e_number_uncertain",
-        token: `${ePolicy.code} (${ePolicy.name_es || "E-number"})`,
-        allergen: ePolicy.matched_allergens?.join(", "),
-      });
-      risk = compareRisk(risk, "high");
-    } else if (ePolicy.policy === "warn") {
-      reasons.push({
-        type: "e_number_uncertain",
-        token: `${ePolicy.code} (${ePolicy.name_es || "E-number"})`,
-        allergen: ePolicy.matched_allergens?.join(", "),
-      });
-      risk = compareRisk(risk, "medium");
-    } else if (ePolicy.policy === "unknown") {
-      // Unknown E-numbers are treated as medium risk
-      reasons.push({
-        type: "e_number_uncertain",
-        token: `${ePolicy.code} (desconocido)`,
-      });
-      risk = compareRisk(risk, "medium");
-    }
-    // "allow" policy doesn't add reasons
-  });
+  // ============================================================================
+  // 6. DETERMINE OVERALL DECISION
+  // ============================================================================
 
-  const uniqueReasons = reasons.filter(
-    (reason, index, self) =>
-      index === self.findIndex((other) => other.type === reason.type && other.token === reason.token),
-  );
+  let overallDecision: RiskDecision = "allow";
+  if (level === "high") {
+    overallDecision = "block";
+  } else if (level === "medium") {
+    overallDecision = "warn";
+  }
+
+  // ============================================================================
+  // 7. DETERMINE ACTIONS
+  // ============================================================================
 
   const actions: RiskAssessment["actions"] = ["guardar"];
-  if (risk === "high") {
+  if (level === "high") {
     actions.push("ver alternativas", "pedir verificación");
-  } else if (risk === "medium") {
+  } else if (level === "medium") {
     actions.push("pedir verificación");
   }
 
   return {
-    risk,
-    confidence: analysis.confidence,
-    reasons: uniqueReasons,
+    level,
+    decision: overallDecision,
+    confidence: analysis.quality.confidence,
+    reasons,
+    matched: {
+      allergens: matchedAllergens,
+      diets: matchedDiets,
+      intolerances: matchedIntolerances,
+      enumbers: matchedENumbers,
+    },
     actions,
   };
 }

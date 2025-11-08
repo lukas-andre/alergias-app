@@ -4,7 +4,9 @@
 
 import type { IngredientsResult } from "@/lib/openai/vision";
 import type { ProfilePayload, RiskAssessment, RiskReason } from "@/lib/risk/types";
+import type { ResultViewModel } from "@/lib/risk/view-model";
 import { TrafficLightDisplay } from "@/components/scan/TrafficLightDisplay";
+import { ResultViewModelRenderer } from "@/components/scan/ResultViewModelRenderer";
 import {
   humanizeRiskReason,
   confidenceToQuality,
@@ -48,6 +50,8 @@ export interface AnalysisPayload {
   model?: string;
   profile?: ProfilePayload | null;
   risk?: RiskAssessment | null;
+  viewModel?: ResultViewModel | null;
+  v2?: boolean;
 }
 
 interface AnalysisResultProps {
@@ -180,7 +184,14 @@ function renderBody({
     case "succeeded":
       if (!result) return null;
 
-      const { data, usage, tokensUSD, estimatedCost, model, risk, profile } = result;
+      const { data, usage, tokensUSD, estimatedCost, model, risk, profile, viewModel, v2 } = result;
+
+      // V2: Use ResultViewModelRenderer if viewModel is present
+      if (v2 && viewModel) {
+        return <ResultViewModelRenderer viewModel={viewModel} />;
+      }
+
+      // V1: Legacy rendering
       const quality = confidenceToQuality(data.confidence);
 
       // Create set of normalized user allergen keys for matching

@@ -12,15 +12,17 @@
  */
 
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { IngredientsResultV2 } from "@/lib/openai/vision-v2-types";
-import type { ProfilePayload, RiskAssessmentV2 } from "./types";
-import { evaluateRiskV2 } from "./evaluate-v2";
+import type { IngredientsResult } from "@/lib/openai/vision-types";
+import type { ProfilePayload, RiskAssessment } from "./types";
+import { evaluateRisk } from "./evaluate";
 import { buildResultViewModel, type ResultViewModel } from "./view-model";
+import { fetchUserProfile } from "@/lib/supabase/queries/profile";
+import { fetchENumberPolicies, type ENumberPolicy } from "@/lib/supabase/queries/enumbers";
 
 export interface ExtractionRow {
   id: string;
   user_id: string;
-  raw_json: any;
+  raw_json: IngredientsResult | unknown; // V2 format or unknown legacy
   image_base64: string | null;
   created_at: string;
   ocr_confidence: number | null;
@@ -28,24 +30,9 @@ export interface ExtractionRow {
 
 export interface RegenerateResult {
   viewModel: ResultViewModel;
-  risk: RiskAssessmentV2;
+  risk: RiskAssessment;
   profile: ProfilePayload | null;
 }
-
-/**
- * Type for E-number policy returned by decide_e_number RPC
- */
-type ENumberPolicy = {
-  code: string;
-  policy: "allow" | "warn" | "block" | "unknown";
-  name_es?: string;
-  linked_allergens?: string[];
-  matched_allergens?: string[];
-  residual_protein_risk?: boolean;
-  reason?: string;
-  likely_origins?: string[];
-  exists?: boolean;
-};
 
 /**
  * Regenerates viewModel from stored extraction.
@@ -61,63 +48,38 @@ export async function regenerateViewModel(
   extraction: ExtractionRow,
   userId: string
 ): Promise<RegenerateResult> {
-  // Parse raw_json as IngredientsResultV2
-  const rawJson = extraction.raw_json as any;
-
-  if (!rawJson) {
-    throw new Error("Extraction raw_json is null or undefined");
+  // Validate raw_json is an object
+  if (!extraction.raw_json || typeof extraction.raw_json !== "object") {
+    throw new Error("Extraction raw_json is null or invalid");
   }
 
+  const rawJson = extraction.raw_json as Record<string, unknown>;
+
   // Validate V2 format (must have mentions array)
-  if (!rawJson.mentions || !Array.isArray(rawJson.mentions)) {
+  if (!Array.isArray(rawJson.mentions)) {
     throw new Error("Extraction does not have V2 format (missing mentions array)");
   }
 
-  const analysisV2 = rawJson as IngredientsResultV2;
+  // Type assertion after validation
+  const analysisV2 = rawJson as IngredientsResult;
 
-  // Fetch user profile
-  let profilePayload: ProfilePayload | null = null;
-
-  try {
-    const { data: payload, error: rpcError } = await supabase.rpc(
-      "get_profile_payload",
-      { p_user_id: userId }
-    );
-
-    if (!rpcError && payload) {
-      profilePayload = payload as unknown as ProfilePayload;
-    }
-  } catch (error) {
-    console.error("Error fetching profile in regenerateViewModel:", error);
-    // Continue without profile (will show as no_profile)
-  }
+  // Fetch user profile using consolidated helper
+  const profilePayload = await fetchUserProfile(supabase, userId);
 
   // Extract unique E-numbers from mentions
   const uniqueENumbers = Array.from(
     new Set(analysisV2.mentions.flatMap((m) => m.enumbers))
   );
 
-  // Fetch E-number policies
-  const eNumberPolicies: ENumberPolicy[] = [];
-
-  for (const code of uniqueENumbers) {
-    try {
-      const { data: policyData } = await supabase.rpc("decide_e_number", {
-        p_user_id: userId,
-        p_code: code,
-      });
-
-      if (policyData && typeof policyData === "object") {
-        eNumberPolicies.push(policyData as ENumberPolicy);
-      }
-    } catch (error) {
-      console.error(`Error fetching E-number policy for ${code}:`, error);
-      // Continue without this policy
-    }
-  }
+  // Fetch E-number policies using consolidated helper
+  const eNumberPolicies = await fetchENumberPolicies(
+    supabase,
+    userId,
+    uniqueENumbers
+  );
 
   // Evaluate risk with V2 engine
-  const riskV2 = evaluateRiskV2(analysisV2, profilePayload, eNumberPolicies);
+  const riskV2 = evaluateRisk(analysisV2, profilePayload, eNumberPolicies);
 
   // Build view model
   const viewModel = buildResultViewModel({

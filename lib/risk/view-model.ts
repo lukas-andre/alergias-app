@@ -8,8 +8,8 @@
  * without any business logic.
  */
 
-import type { IngredientsResultV2 } from "@/lib/openai/vision-v2-types";
-import type { RiskAssessmentV2, RiskLevel, ProfilePayload } from "./types";
+import type { IngredientsResult } from "@/lib/openai/vision-types";
+import type { RiskAssessment, RiskLevel, ProfilePayload } from "./types";
 import { humanizeRiskLevel, confidenceToQuality, humanizeTimestamp } from "@/lib/utils/humanize-copy";
 
 export interface WhyItem {
@@ -116,8 +116,8 @@ export function buildResultViewModel({
   costUSD,
   scannedAt,
 }: {
-  analysis: IngredientsResultV2;
-  risk: RiskAssessmentV2;
+  analysis: IngredientsResult;
+  risk: RiskAssessment;
   profile: ProfilePayload | null;
   imageBase64?: string | null;
   model?: string;
