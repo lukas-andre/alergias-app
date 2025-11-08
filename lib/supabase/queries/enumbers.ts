@@ -64,7 +64,7 @@ export async function fetchENumberPolicies(
       }
 
       if (data && typeof data === "object") {
-        policies.push(data as ENumberPolicy);
+        policies.push(data as unknown as ENumberPolicy);
       }
     } catch (error) {
       console.error(`Exception fetching E-number policy for ${code}:`, error);

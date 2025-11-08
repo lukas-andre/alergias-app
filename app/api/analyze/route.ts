@@ -85,9 +85,14 @@ export async function POST(request: Request) {
           profilePayload = await fetchUserProfile(supabase, user.id);
 
           if (profilePayload && Array.isArray(cachedData.mentions)) {
-            // V2 format - regenerate with current profile
-            const uniqueENumbers = Array.from(
-              new Set(cachedData.mentions.flatMap((m: any) => m.enumbers || []))
+            // Regenerate with current profile
+            const uniqueENumbers: string[] = Array.from(
+              new Set(
+                cachedData.mentions.flatMap((m: any) => {
+                  const enumbers = m.enumbers;
+                  return Array.isArray(enumbers) ? enumbers.filter((e): e is string => typeof e === 'string') : [];
+                })
+              )
             );
 
             const eNumberPolicies = await fetchENumberPolicies(
@@ -127,11 +132,13 @@ export async function POST(request: Request) {
     }
 
     // Not in cache, call OpenAI
-    const { data: dataV2, tokensUSD, usage } = await extractIngredientsViaSDK({
+    const response = await extractIngredientsViaSDK({
       apiKey,
       imageUrlOrBase64: dataUrl,
       model,
     });
+
+    const { data: dataV2, tokensUSD, usage } = response;
 
     let profilePayload: ProfilePayload | null = null;
     let viewModel: ResultViewModel | null = null;
@@ -143,7 +150,7 @@ export async function POST(request: Request) {
 
         if (profilePayload) {
           // Extract E-numbers from mentions
-          const uniqueENumbers = Array.from(
+          const uniqueENumbers: string[] = Array.from(
             new Set(dataV2.mentions.flatMap((m) => m.enumbers))
           );
 

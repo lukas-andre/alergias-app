@@ -61,7 +61,7 @@ export async function regenerateViewModel(
   }
 
   // Type assertion after validation
-  const analysisV2 = rawJson as IngredientsResult;
+  const analysisV2 = rawJson as unknown as IngredientsResult;
 
   // Fetch user profile using consolidated helper
   const profilePayload = await fetchUserProfile(supabase, userId);

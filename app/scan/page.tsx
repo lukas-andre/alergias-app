@@ -5,11 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  AnalysisResult,
-  type AnalysisPayload,
-  type AnalysisStatus,
-} from "@/components/AnalysisResult";
 import { ImagePicker } from "@/components/ImagePicker";
 import { Stepper } from "@/components/scan/Stepper";
 import { CropperDialog } from "@/components/scan/CropperDialog";
@@ -27,6 +22,8 @@ type RequestJob = {
   abortController: AbortController;
 };
 
+type AnalysisStatus = "idle" | "uploading" | "processing" | "analyzing" | "succeeded" | "failed";
+
 export default function ScanPage() {
   const router = useRouter();
   const supabase = useSupabase();
@@ -41,10 +38,9 @@ export default function ScanPage() {
   const [status, setStatus] = useState<AnalysisStatus>("idle");
   const [statusLabel, setStatusLabel] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalysisPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // V2 result state
+  // Result state
   const [viewModelResult, setViewModelResult] = useState<ResultViewModel | null>(null);
   const [extractionId, setExtractionId] = useState<string | null>(null);
 
@@ -88,7 +84,6 @@ export default function ScanPage() {
   const resetState = useCallback(() => {
     setStatus("idle");
     setStatusLabel(null);
-    setResult(null);
     setError(null);
     setViewModelResult(null);
     setExtractionId(null);
@@ -212,10 +207,9 @@ export default function ScanPage() {
           return;
         }
 
-        // V1 fallback (for non-authenticated users or legacy responses)
-        setResult(payload as AnalysisPayload);
-        setStatus("succeeded");
-        setStatusLabel("Resultado listo");
+        // No viewModel returned (shouldn't happen)
+        setError("No se pudo generar el resultado. Intenta nuevamente.");
+        setStatus("failed");
         abortCurrentJob();
       } catch (cause) {
         if (jobId.current !== runId) return;
@@ -308,7 +302,6 @@ export default function ScanPage() {
             {/* Step 3: Analyze (Results) */}
             {step === "analyze" && (
               <>
-                {/* V2: ResultViewModelRenderer */}
                 {viewModelResult ? (
                   <>
                     <ResultViewModelRenderer viewModel={viewModelResult} />
@@ -324,15 +317,14 @@ export default function ScanPage() {
                       </div>
                     )}
                   </>
+                ) : error ? (
+                  <div className="text-center py-8">
+                    <p className="text-danger text-lg">{error}</p>
+                  </div>
                 ) : (
-                  /* V1 Fallback: AnalysisResult (non-authenticated or legacy) */
-                  <AnalysisResult
-                    error={error}
-                    result={result}
-                    status={status}
-                    statusLabel={statusLabel}
-                    previewUrl={previewUrl}
-                  />
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground">{statusLabel || "Analizando..."}</p>
+                  </div>
                 )}
 
                 {/* Scan Again Button */}

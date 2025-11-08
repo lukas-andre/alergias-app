@@ -1,21 +1,7 @@
 export type RiskLevel = "low" | "medium" | "high";
 
-export type RiskReasonType =
-  | "contains"
-  | "trace"
-  | "same_line"
-  | "e_number_uncertain"
-  | "low_confidence"
-  | "no_profile";
-
-export interface RiskReason {
-  type: RiskReasonType;
-  token: string;
-  allergen?: string;
-}
-
 // ============================================================================
-// V2 Types - Enhanced Risk Assessment with Explainability
+// Enhanced Risk Assessment with Explainability
 // ============================================================================
 
 export type RiskDecision = "allow" | "warn" | "block";
@@ -94,13 +80,6 @@ export interface RiskAssessment {
     intolerances: MatchedIntolerance[];
     enumbers: MatchedENumber[];
   };
-  actions: Array<"guardar" | "ver alternativas" | "ver mapa cercano" | "pedir verificación">;
-}
-
-export interface RiskAssessment {
-  risk: RiskLevel;
-  confidence: number;
-  reasons: RiskReason[];
   actions: Array<"guardar" | "ver alternativas" | "ver mapa cercano" | "pedir verificación">;
 }
 

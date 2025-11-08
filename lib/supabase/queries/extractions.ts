@@ -6,7 +6,7 @@
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../types";
-import type { IngredientsResult } from "@/lib/openai/vision";
+import type { IngredientsResult } from "@/lib/openai/vision-types";
 
 type ExtractionInsert = Database["public"]["Tables"]["extractions"]["Insert"];
 type ExtractionRow = Database["public"]["Tables"]["extractions"]["Row"];
@@ -204,7 +204,7 @@ export async function getRecentExtractions(
   // Transform data
   return (data || []).map((item) => {
     const rawJson = item.raw_json as IngredientsResult | null;
-    const detectedAllergens = rawJson?.detected_allergens || [];
+    const detectedAllergens = rawJson?.detected_allergens.map(a => a.key) || [];
 
     return {
       id: item.id,

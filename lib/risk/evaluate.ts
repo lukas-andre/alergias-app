@@ -23,7 +23,7 @@ import type {
   MatchedENumber,
   AllergenVia,
 } from "./types";
-import type { ENumberPolicy } from "./evaluate";
+import type { ENumberPolicy } from "@/lib/supabase/queries/enumbers";
 import { DIET_BLOCKS, INTOLERANCE_TRIGGERS } from "@/lib/constants/dietary-rules";
 
 const RISK_ORDER: RiskLevel[] = ["low", "medium", "high"];
