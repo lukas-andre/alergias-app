@@ -8,9 +8,11 @@ import {
   type ModelKey,
 } from "@/lib/openai/cost-estimator";
 import { evaluateRisk } from "@/lib/risk/evaluate";
+import { evaluateRiskV2 } from "@/lib/risk/evaluate-v2";
 import type { ProfilePayload, RiskAssessment } from "@/lib/risk/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { extractIngredientsJSONViaSDK } from "@/lib/openai/vision";
+import { extractIngredientsJSONViaSDK, extractIngredientsJSONV2ViaSDK } from "@/lib/openai/vision";
+import { buildResultViewModel, type ResultViewModel } from "@/lib/risk/view-model";
 import { calculateLabelHash } from "@/lib/hash/label-hash";
 import {
   findCachedExtraction,
@@ -29,6 +31,10 @@ function parseDimension(value: FormDataEntryValue | null): number | null {
 
 export async function POST(request: Request) {
   try {
+    // Check if V2 API is requested
+    const url = new URL(request.url);
+    const useV2 = url.searchParams.get("v") === "2";
+
     const formData = await request.formData();
     const image = formData.get("image");
     if (!(image instanceof File)) {
@@ -108,6 +114,156 @@ export async function POST(request: Request) {
     }
 
     // Not in cache, call OpenAI
+    // V2 Path: Use structured mentions
+    if (useV2) {
+      const { data: dataV2, tokensUSD, usage } = await extractIngredientsJSONV2ViaSDK({
+        apiKey,
+        imageUrlOrBase64: dataUrl,
+        model,
+      });
+
+      let profilePayload: ProfilePayload | null = null;
+      let viewModel: ResultViewModel | null = null;
+
+      // Get profile and evaluate risk
+      try {
+        if (!authError && user) {
+          const { data: payload, error: rpcError } = await supabase.rpc("get_profile_payload", {
+            p_user_id: user.id,
+          });
+
+          if (!rpcError && payload) {
+            profilePayload = payload as unknown as ProfilePayload;
+
+            // Extract E-numbers from mentions
+            const uniqueENumbers = Array.from(
+              new Set(dataV2.mentions.flatMap((m) => m.enumbers))
+            );
+
+            // Get E-number policies
+            type ENumberPolicy = {
+              code: string;
+              policy: "allow" | "warn" | "block" | "unknown";
+              name_es?: string;
+              linked_allergens?: string[];
+              matched_allergens?: string[];
+              residual_protein_risk?: boolean;
+              reason?: string;
+              likely_origins?: string[];
+              exists?: boolean;
+            };
+
+            const eNumberPolicies: ENumberPolicy[] = [];
+
+            for (const code of uniqueENumbers) {
+              try {
+                const { data: policyData } = await supabase.rpc("decide_e_number", {
+                  p_user_id: user.id,
+                  p_code: code,
+                });
+
+                if (policyData && typeof policyData === 'object') {
+                  eNumberPolicies.push(policyData as ENumberPolicy);
+                }
+              } catch (eNumError) {
+                console.error(`Error checking E-number ${code}:`, eNumError);
+              }
+            }
+
+            // Evaluate risk V2
+            const riskV2 = evaluateRiskV2(dataV2, profilePayload, eNumberPolicies);
+
+            // Build ViewModel
+            viewModel = buildResultViewModel({
+              analysis: dataV2,
+              risk: riskV2,
+              profile: profilePayload,
+              imageBase64: base64,
+              model,
+              costUSD: tokensUSD,
+            });
+          }
+        }
+      } catch (cause) {
+        console.error("Error obteniendo perfil de Supabase:", cause);
+      }
+
+      // Persist extraction if user is authenticated
+      if (!authError && user) {
+        try {
+          const extraction = await insertExtraction(supabase, {
+            user_id: user.id,
+            origin: "label",
+            raw_text: dataV2.ocr_text,
+            raw_json: dataV2 as any,
+            ocr_confidence: dataV2.quality.confidence,
+            vision_confidence: dataV2.quality.confidence,
+            model_confidence: dataV2.quality.confidence,
+            final_confidence: viewModel?.verdict.confidence ?? dataV2.quality.confidence,
+            label_hash: labelHash,
+            source_ref: null,
+            image_base64: base64,
+          });
+
+          extractionId = extraction.id;
+
+          // Tokenize mentions
+          const tokens = [];
+          for (const mention of dataV2.mentions) {
+            tokens.push({
+              extraction_id: extractionId,
+              surface: mention.surface,
+              canonical: mention.canonical,
+              type: mention.type as any,
+              confidence: dataV2.quality.confidence,
+              span: `[${mention.offset.start},${mention.offset.end})`,
+              allergen_id: null, // TODO: Map to allergen_types
+              e_code: mention.enumbers[0] || null,
+            });
+          }
+
+          if (tokens.length > 0) {
+            await insertTokens(supabase, tokens);
+          }
+        } catch (persistError) {
+          console.error("Error persisting extraction:", persistError);
+        }
+      }
+
+      const estimatedCost =
+        width && height
+          ? estimateCost({
+              model,
+              images: [{ width, height }],
+              expectedOutputTokens: 200,
+              promptTextTokens: 120,
+              rules: DEFAULT_TILE_RULES,
+            })
+          : null;
+
+      return NextResponse.json({
+        data: dataV2,
+        tokensUSD,
+        usage,
+        estimatedCost: estimatedCost
+          ? {
+              costUSD: estimatedCost.costUSD,
+              perImageUSD: estimatedCost.perImageUSD,
+              totalImageTokens: estimatedCost.totalImageTokens,
+              inputTokens: estimatedCost.inputTokens,
+              outputTokens: estimatedCost.outputTokens,
+            }
+          : null,
+        model,
+        profile: profilePayload,
+        viewModel,
+        extraction_id: extractionId,
+        from_cache: false,
+        v2: true,
+      });
+    }
+
+    // V1 Path (Legacy)
     const { data, tokensUSD, usage } = await extractIngredientsJSONViaSDK({
       apiKey,
       imageUrlOrBase64: dataUrl,

@@ -143,16 +143,23 @@ export function evaluateRisk(
     return effectiveStrictnessCache.get(key);
   };
 
+  // Handle V1 (string[]) and V2 (object[]) formats for detected_allergens
+  const allergenStrings = Array.isArray(analysis.detected_allergens)
+    ? analysis.detected_allergens.map(a =>
+        typeof a === 'string' ? a : (a as any).key
+      )
+    : [];
+
   const textSources = [
     analysis.ocr_text ?? "",
     ...(analysis.warnings ?? []),
-    ...(analysis.detected_allergens ?? []),
+    ...allergenStrings,
   ];
 
   const traceTokens = detectTraceTokens(textSources);
   const sameLineTokens = detectSameLineTokens(textSources);
 
-  analysis.detected_allergens.forEach((token) => {
+  allergenStrings.forEach((token) => {
     const normalized = normalizeKey(token);
     const matchedKey = normalizedKeys.get(normalized);
     if (!matchedKey) return;
