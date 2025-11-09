@@ -80,7 +80,7 @@ export function LightboxImage({
         </CardHeader>
         <CardContent>
           <div
-            className="relative aspect-[4/3] w-full overflow-hidden rounded-lg border-2 border-neutral-200 bg-neutral-50 cursor-pointer group"
+            className="relative min-h-48 max-h-80 w-full overflow-hidden rounded-lg border-2 border-neutral-200 bg-neutral-50 cursor-pointer group"
             onClick={() => setIsOpen(true)}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
@@ -95,6 +95,7 @@ export function LightboxImage({
             <img
               src={thumbUrl}
               alt={alt}
+              loading="eager"
               className="w-full h-full object-contain transition-transform group-hover:scale-105"
             />
 

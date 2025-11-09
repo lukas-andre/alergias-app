@@ -15,7 +15,7 @@
 import { useState, useCallback, useEffect } from "react";
 import Cropper from "react-easy-crop";
 import type { Area, Point } from "react-easy-crop";
-import { RotateCw, RotateCcw, Check, X } from "lucide-react";
+import { RotateCw, RotateCcw, Check, X, RectangleVertical, RectangleHorizontal, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -123,6 +123,7 @@ export function CropperDialog({
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [legibility, setLegibility] = useState<Legibility>("medium");
   const [processing, setProcessing] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<number>(3 / 4); // Default: Portrait
 
   // Load image from file
   useEffect(() => {
@@ -206,6 +207,51 @@ export function CropperDialog({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Aspect Ratio Selector */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-neutral-700">
+            Orientación del recorte
+          </label>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant={aspectRatio === 3 / 4 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAspectRatio(3 / 4)}
+              disabled={processing}
+              className="flex-1"
+            >
+              <RectangleVertical className="w-4 h-4 mr-2" />
+              Retrato
+            </Button>
+            <Button
+              type="button"
+              variant={aspectRatio === 4 / 3 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAspectRatio(4 / 3)}
+              disabled={processing}
+              className="flex-1"
+            >
+              <RectangleHorizontal className="w-4 h-4 mr-2" />
+              Apaisado
+            </Button>
+            <Button
+              type="button"
+              variant={aspectRatio === 1 ? "default" : "outline"}
+              size="sm"
+              onClick={() => setAspectRatio(1)}
+              disabled={processing}
+              className="flex-1"
+            >
+              <Square className="w-4 h-4 mr-2" />
+              Cuadrado
+            </Button>
+          </div>
+          <p className="text-xs text-neutral-500">
+            La mayoría de etiquetas son verticales (Retrato)
+          </p>
+        </div>
+
         {/* Cropper Area */}
         <div className="relative w-full h-96 bg-neutral-900 rounded-lg overflow-hidden">
           <Cropper
@@ -213,7 +259,7 @@ export function CropperDialog({
             crop={crop}
             zoom={zoom}
             rotation={rotation}
-            aspect={4 / 3}
+            aspect={aspectRatio}
             onCropChange={setCrop}
             onZoomChange={setZoom}
             onCropComplete={onCropComplete}

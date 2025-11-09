@@ -115,7 +115,6 @@ export function ImagePicker({
         id={inputId}
         ref={inputRef}
         accept="image/*"
-        capture="environment"
         className="sr-only"
         onChange={handleFileChange}
         type="file"
