@@ -1,74 +1,44 @@
 /**
- * OpenTelemetry Instrumentation for Next.js App Router
+ * OpenTelemetry Auto-Instrumentation for Next.js
  *
- * Sends traces to Grafana Cloud (Tempo) via OTLP HTTP exporter.
- * Auto-instruments HTTP/fetch calls via undici (Node 18+).
+ * Uses official Grafana Cloud auto-instrumentation via environment variables.
+ * No manual SDK setup needed - everything is handled by NODE_OPTIONS flag.
  *
- * Configuration via environment variables:
- * - OTEL_SERVICE_NAME: Service identifier (default: alergiascl-web)
- * - OTEL_EXPORTER_OTLP_ENDPOINT: Grafana Cloud OTLP gateway URL
- * - OTEL_EXPORTER_OTLP_AUTH: Authorization header from Grafana Cloud
- * - OTEL_TRACES_RATIO: Sampling ratio 0.0-1.0 (default: 0.05 = 5%)
- * - OTEL_DEBUG: Set to "1" for debug logging
+ * Required Environment Variables (from Grafana Cloud):
+ * - OTEL_TRACES_EXPORTER=otlp
+ * - OTEL_EXPORTER_OTLP_ENDPOINT=https://otlp-gateway-prod-sa-east-1.grafana.net/otlp
+ * - OTEL_EXPORTER_OTLP_HEADERS=Authorization=Basic <token>
+ * - OTEL_RESOURCE_ATTRIBUTES=service.name=alergiascl
+ * - OTEL_NODE_RESOURCE_DETECTORS=env,host,os
  *
- * @see docs/GRAFANA_GUIDE.md
+ * And in package.json scripts or Railway env vars:
+ * - NODE_OPTIONS=--require @opentelemetry/auto-instrumentations-node/register
+ *
+ * Auto-instrumented operations:
+ * - HTTP requests (outgoing fetch, http.request)
+ * - Database queries (Supabase via fetch)
+ * - OpenAI API calls (via fetch)
+ *
+ * Manual spans can still be added via lib/otel/withSpan.ts helper.
+ *
+ * @see https://grafana.com/docs/grafana-cloud/monitor-applications/application-observability/setup/quickstart/nodejs/
  */
-
-import { NodeSDK } from "@opentelemetry/sdk-node";
-import { resourceFromAttributes, defaultResource } from "@opentelemetry/resources";
-import { SEMRESATTRS_SERVICE_NAME, SEMRESATTRS_DEPLOYMENT_ENVIRONMENT } from "@opentelemetry/semantic-conventions";
-import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
-import { ParentBasedSampler, TraceIdRatioBasedSampler } from "@opentelemetry/sdk-trace-base";
-import { diag, DiagConsoleLogger, DiagLogLevel } from "@opentelemetry/api";
-
-// Enable debug logging if OTEL_DEBUG=1
-if (process.env.OTEL_DEBUG === "1") {
-  diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
-}
-
-// Configure OTLP HTTP exporter for Grafana Cloud
-const exporter = new OTLPTraceExporter({
-  url: `${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}/v1/traces`,
-  headers: {
-    // Grafana Cloud provides: "Authorization=Basic xxx" or "Authorization=Bearer yyy"
-    // Extract the value after "Authorization=" and use it directly
-    Authorization: String(process.env.OTEL_EXPORTER_OTLP_AUTH?.split("Authorization=")[1] ?? ""),
-  },
-});
-
-// Initialize OpenTelemetry SDK
-const sdk = new NodeSDK({
-  resource: defaultResource().merge(
-    resourceFromAttributes({
-      [SEMRESATTRS_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME ?? "alergiascl-web",
-      [SEMRESATTRS_DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV ?? "development",
-    })
-  ),
-  traceExporter: exporter,
-  instrumentations: [
-    getNodeAutoInstrumentations({
-      // Auto-instrument HTTP requests (OpenAI, Supabase REST API)
-      "@opentelemetry/instrumentation-http": { enabled: true },
-      // Auto-instrument fetch() calls in Node 18+ (used by OpenAI SDK, Supabase client)
-      "@opentelemetry/instrumentation-undici": { enabled: true },
-      // Disable fs instrumentation (too noisy, not useful for API tracing)
-      "@opentelemetry/instrumentation-fs": { enabled: false },
-    }),
-  ],
-  sampler: new ParentBasedSampler({
-    // Sample based on trace ID ratio (default: 5% to save quota)
-    root: new TraceIdRatioBasedSampler(Number(process.env.OTEL_TRACES_RATIO ?? 0.05)),
-  }),
-});
-
-// Start SDK when Next.js server initializes
-sdk.start();
 
 /**
  * Required by Next.js instrumentation hook.
  * Called once when the server starts (not on every request).
  */
 export async function register() {
-  console.log("[OTel] Instrumentation registered");
+  if (process.env.OTEL_TRACES_EXPORTER === "otlp") {
+    console.log("[OTel] Auto-instrumentation enabled");
+    console.log(`[OTel] Endpoint: ${process.env.OTEL_EXPORTER_OTLP_ENDPOINT}`);
+
+    // Extract service name from OTEL_RESOURCE_ATTRIBUTES
+    const resourceAttrs = process.env.OTEL_RESOURCE_ATTRIBUTES || "";
+    const serviceNameMatch = resourceAttrs.match(/service\.name=([^,\s]+)/);
+    const serviceName = serviceNameMatch ? serviceNameMatch[1] : "unknown";
+    console.log(`[OTel] Service: ${serviceName}`);
+  } else {
+    console.log("[OTel] Auto-instrumentation disabled (OTEL_TRACES_EXPORTER not set)");
+  }
 }

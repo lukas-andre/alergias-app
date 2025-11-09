@@ -8,7 +8,7 @@ import {
   type ModelKey,
 } from "@/lib/openai/cost-estimator";
 import { evaluateRisk } from "@/lib/risk/evaluate";
-import type { ProfilePayload, RiskAssessment } from "@/lib/risk/types";
+import type { ProfilePayload } from "@/lib/risk/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { extractIngredientsViaSDK } from "@/lib/openai/vision";
 import { fetchUserProfile } from "@/lib/supabase/queries/profile";
@@ -72,7 +72,6 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     let extractionId: string | null = null;
-    let fromCache = false;
 
     // Check cache if user is authenticated
     if (!authError && user) {
