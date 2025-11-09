@@ -1,13 +1,13 @@
 /**
- * Scan Result Detail Page (V2)
+ * Scan Result Detail Page
  *
- * Displays full V2 analysis for a saved extraction.
+ * Displays full analysis for a saved extraction.
  *
  * Fetches from /api/result/[id] endpoint which regenerates
  * the complete ResultViewModel from stored extraction data.
  *
  * Features:
- * - ResultViewModelRenderer (V2 UI)
+ * - ResultViewModelRenderer UI
  * - Real-time profile integration
  * - Legacy format detection (410 error)
  * - Shareable URLs
@@ -56,7 +56,7 @@ export default function ScanResultPage() {
           return;
         }
 
-        // Fetch from V2 endpoint
+        // Fetch result from API
         const response = await fetch(`/api/result/${extractionId}`);
 
         if (!response.ok) {
@@ -82,7 +82,7 @@ export default function ScanResultPage() {
           return;
         }
 
-        // Parse V2 response
+        // Parse response
         const payload = await response.json();
 
         if (!payload.viewModel) {
@@ -160,7 +160,7 @@ export default function ScanResultPage() {
     );
   }
 
-  // Success state: Render V2 ViewModel
+  // Success state: Render ViewModel
   return (
     <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50">
       <div className="container mx-auto px-4 py-8 max-w-5xl">
@@ -174,7 +174,7 @@ export default function ScanResultPage() {
           </Link>
         </header>
 
-        {/* V2 Result Display */}
+        {/* Result Display */}
         <ResultViewModelRenderer viewModel={viewModel} />
 
         {/* Metadata Footer */}

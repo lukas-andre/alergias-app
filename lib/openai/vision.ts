@@ -20,9 +20,9 @@ interface ExtractParams {
 }
 
 /**
- * Extract ingredients with structured mentions (V2)
+ * Extract ingredients with structured mentions
  *
- * Enhanced version that returns:
+ * Returns:
  * - Mentions with type, section, offset, evidence
  * - Allergen implications (via synonyms/E-numbers)
  * - Quality assessment with legibility
@@ -204,7 +204,7 @@ export async function extractIngredientsViaSDK({
     text: {
       format: {
         type: "json_schema",
-        name: "ingredients_v2_schema",
+        name: "ingredients_schema",
         schema,
         strict: true,
       },

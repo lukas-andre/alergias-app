@@ -3,10 +3,10 @@
  *
  * Regenerates ResultViewModel from stored extraction.
  *
- * This endpoint enables /scan/result/[id] page to display V2 results
+ * This endpoint enables /scan/result/[id] page to display results
  * by regenerating the viewModel from raw_json stored in database.
  *
- * Response format matches /api/analyze?v=2 structure.
+ * Response format matches /api/analyze structure.
  */
 
 import { NextResponse } from "next/server";
@@ -49,7 +49,7 @@ export async function GET(
 
     const { extraction } = result;
 
-    // Check if V2 format (has mentions array)
+    // Check format (must have mentions array)
     const rawJson = extraction.raw_json as any;
 
     if (!rawJson) {
@@ -59,7 +59,7 @@ export async function GET(
       );
     }
 
-    // V1 legacy detection
+    // Legacy format detection
     if (!rawJson.mentions || !Array.isArray(rawJson.mentions)) {
       return NextResponse.json(
         {
@@ -84,7 +84,7 @@ export async function GET(
       user.id
     );
 
-    // Return response matching /api/analyze?v=2 structure
+    // Return response matching /api/analyze structure
     return NextResponse.json({
       viewModel,
       profile,
@@ -95,15 +95,14 @@ export async function GET(
         costUSD: undefined, // Historical scans don't track cost
         confidence: extraction.final_confidence,
       },
-      v2: true,
     });
   } catch (error) {
     console.error("Error in /api/result/[id]:", error);
 
-    // Check if it's our "V1 legacy" error
+    // Check if it's our "legacy format" error
     if (
       error instanceof Error &&
-      error.message.includes("does not have V2 format")
+      error.message.includes("does not have current format")
     ) {
       return NextResponse.json(
         {

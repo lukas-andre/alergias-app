@@ -180,7 +180,7 @@ export default function ScanPage() {
         formData.append("width", String(width));
         formData.append("height", String(height));
 
-        const response = await fetch("/api/analyze?v=2", {
+        const response = await fetch("/api/analyze", {
           method: "POST",
           body: formData,
           signal: controller.signal,
@@ -196,9 +196,8 @@ export default function ScanPage() {
         const payload = (await response.json()) as any;
         if (jobId.current !== runId) return;
 
-        // Check if V2 response with viewModel
-        if ("v2" in payload && payload.v2 && "viewModel" in payload && payload.viewModel) {
-          // V2 path: show result inline with ResultViewModelRenderer
+        // Check for viewModel in response
+        if ("viewModel" in payload && payload.viewModel) {
           setViewModelResult(payload.viewModel as ResultViewModel);
           setExtractionId(payload.extraction_id || null);
           setStatus("succeeded");

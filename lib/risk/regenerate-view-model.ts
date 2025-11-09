@@ -22,7 +22,7 @@ import { fetchENumberPolicies, type ENumberPolicy } from "@/lib/supabase/queries
 export interface ExtractionRow {
   id: string;
   user_id: string;
-  raw_json: IngredientsResult | unknown; // V2 format or unknown legacy
+  raw_json: IngredientsResult | unknown; // Current format or unknown legacy
   image_base64: string | null;
   created_at: string;
   ocr_confidence: number | null;
@@ -55,20 +55,20 @@ export async function regenerateViewModel(
 
   const rawJson = extraction.raw_json as Record<string, unknown>;
 
-  // Validate V2 format (must have mentions array)
+  // Validate current format (must have mentions array)
   if (!Array.isArray(rawJson.mentions)) {
-    throw new Error("Extraction does not have V2 format (missing mentions array)");
+    throw new Error("Extraction does not have current format (missing mentions array)");
   }
 
   // Type assertion after validation
-  const analysisV2 = rawJson as unknown as IngredientsResult;
+  const analysis = rawJson as unknown as IngredientsResult;
 
   // Fetch user profile using consolidated helper
   const profilePayload = await fetchUserProfile(supabase, userId);
 
   // Extract unique E-numbers from mentions
   const uniqueENumbers = Array.from(
-    new Set(analysisV2.mentions.flatMap((m) => m.enumbers))
+    new Set(analysis.mentions.flatMap((m) => m.enumbers))
   );
 
   // Fetch E-number policies using consolidated helper
@@ -78,13 +78,13 @@ export async function regenerateViewModel(
     uniqueENumbers
   );
 
-  // Evaluate risk with V2 engine
-  const riskV2 = evaluateRisk(analysisV2, profilePayload, eNumberPolicies);
+  // Evaluate risk
+  const risk = evaluateRisk(analysis, profilePayload, eNumberPolicies);
 
   // Build view model
   const viewModel = buildResultViewModel({
-    analysis: analysisV2,
-    risk: riskV2,
+    analysis: analysis,
+    risk: risk,
     profile: profilePayload,
     imageBase64: extraction.image_base64 || undefined,
     model: "gpt-4o", // TODO: Extract from extraction if stored
@@ -94,7 +94,7 @@ export async function regenerateViewModel(
 
   return {
     viewModel,
-    risk: riskV2,
+    risk: risk,
     profile: profilePayload,
   };
 }

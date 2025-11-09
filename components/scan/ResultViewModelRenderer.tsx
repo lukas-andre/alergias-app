@@ -2,7 +2,7 @@
  * ResultViewModelRenderer Component
  *
  * Master component that renders complete analysis result using ViewModel.
- * This component orchestrates all V2 components in the correct hierarchy:
+ * This component orchestrates all components in the correct hierarchy:
  *
  * 1. VerdictPill (top, prominent)
  * 2. WhyList (evidence-based explanations)

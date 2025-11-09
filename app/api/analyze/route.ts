@@ -101,11 +101,11 @@ export async function POST(request: Request) {
               uniqueENumbers
             );
 
-            const riskV2 = evaluateRisk(cachedData, profilePayload, eNumberPolicies);
+            const risk = evaluateRisk(cachedData, profilePayload, eNumberPolicies);
 
             viewModel = buildResultViewModel({
               analysis: cachedData,
-              risk: riskV2,
+              risk: risk,
               profile: profilePayload,
               imageBase64: cached.image_base64 || undefined,
               model,
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
       model,
     });
 
-    const { data: dataV2, tokensUSD, usage } = response;
+    const { data, tokensUSD, usage } = response;
 
     let profilePayload: ProfilePayload | null = null;
     let viewModel: ResultViewModel | null = null;
@@ -151,7 +151,7 @@ export async function POST(request: Request) {
         if (profilePayload) {
           // Extract E-numbers from mentions
           const uniqueENumbers: string[] = Array.from(
-            new Set(dataV2.mentions.flatMap((m) => m.enumbers))
+            new Set(data.mentions.flatMap((m) => m.enumbers))
           );
 
           // Get E-number policies using helper
@@ -161,13 +161,13 @@ export async function POST(request: Request) {
             uniqueENumbers
           );
 
-          // Evaluate risk V2
-          const riskV2 = evaluateRisk(dataV2, profilePayload, eNumberPolicies);
+          // Evaluate risk
+          const risk = evaluateRisk(data, profilePayload, eNumberPolicies);
 
           // Build ViewModel
           viewModel = buildResultViewModel({
-            analysis: dataV2,
-            risk: riskV2,
+            analysis: data,
+            risk: risk,
             profile: profilePayload,
             imageBase64: base64,
             model,
@@ -185,12 +185,12 @@ export async function POST(request: Request) {
         const extraction = await insertExtraction(supabase, {
           user_id: user.id,
           origin: "label",
-          raw_text: dataV2.ocr_text,
-          raw_json: dataV2 as any,
-          ocr_confidence: dataV2.quality.confidence,
-          vision_confidence: dataV2.quality.confidence,
-          model_confidence: dataV2.quality.confidence,
-          final_confidence: viewModel?.verdict.confidence ?? dataV2.quality.confidence,
+          raw_text: data.ocr_text,
+          raw_json: data as any,
+          ocr_confidence: data.quality.confidence,
+          vision_confidence: data.quality.confidence,
+          model_confidence: data.quality.confidence,
+          final_confidence: viewModel?.verdict.confidence ?? data.quality.confidence,
           label_hash: labelHash,
           source_ref: null,
           image_base64: base64,
@@ -200,13 +200,13 @@ export async function POST(request: Request) {
 
         // Tokenize mentions
         const tokens = [];
-        for (const mention of dataV2.mentions) {
+        for (const mention of data.mentions) {
           tokens.push({
             extraction_id: extractionId,
             surface: mention.surface,
             canonical: mention.canonical,
             type: mention.type as any,
-            confidence: dataV2.quality.confidence,
+            confidence: data.quality.confidence,
             span: `[${mention.offset.start},${mention.offset.end})`,
             allergen_id: null, // TODO: Map to allergen_types
             e_code: mention.enumbers[0] || null,
@@ -233,7 +233,7 @@ export async function POST(request: Request) {
         : null;
 
     return NextResponse.json({
-      data: dataV2,
+      data: data,
       tokensUSD,
       usage,
       estimatedCost: estimatedCost
