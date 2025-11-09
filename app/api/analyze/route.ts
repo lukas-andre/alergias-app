@@ -227,6 +227,14 @@ export async function POST(request: Request) {
 
             extractionId = extraction.id;
 
+            // Map OpenAI mention types to database types
+            // "warning" → "trace" (semantic mapping: both represent contamination warnings)
+            // "icon" → "icon" (direct mapping after migration)
+            const mapMentionTypeToDBType = (type: string): string => {
+              if (type === 'warning') return 'trace';
+              return type;
+            };
+
             // Tokenize mentions
             const tokens = [];
             for (const mention of data.mentions) {
@@ -234,7 +242,7 @@ export async function POST(request: Request) {
                 extraction_id: extractionId,
                 surface: mention.surface,
                 canonical: mention.canonical,
-                type: mention.type as any,
+                type: mapMentionTypeToDBType(mention.type),
                 confidence: data.quality.confidence,
                 span: `[${mention.offset.start},${mention.offset.end})`,
                 allergen_id: null, // TODO: Map to allergen_types
