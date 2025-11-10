@@ -28,14 +28,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { intoleranceTypeSchema } from "@/lib/admin/validation";
-import { createIntolerance, updateIntolerance } from "@/lib/admin/api-client";
-import type { IntoleranceType } from "@/lib/supabase/types";
+import { createIntolerance, updateIntolerance, type IntoleranceType } from "@/lib/admin/api-client";
 
 type IntoleranceFormData = {
   key: string;
   name_es: string;
   notes: string | null;
-  synonyms: string[];
+  synonyms: string[] | null;
 };
 
 interface IntoleranceDialogProps {
@@ -57,7 +56,7 @@ export function IntoleranceDialog({
   const isEditing = !!intolerance;
 
   const form = useForm<IntoleranceFormData>({
-    resolver: zodResolver(intoleranceTypeSchema),
+    resolver: zodResolver(intoleranceTypeSchema) as any,
     defaultValues: intolerance
       ? {
           key: intolerance.key,
@@ -118,7 +117,7 @@ export function IntoleranceDialog({
     const trimmed = synonymInput.trim();
     if (!trimmed) return;
 
-    const currentSynonyms = form.getValues("synonyms");
+    const currentSynonyms = form.getValues("synonyms") || [];
     if (!currentSynonyms.includes(trimmed)) {
       form.setValue("synonyms", [...currentSynonyms, trimmed]);
       setSynonymInput("");
@@ -128,7 +127,7 @@ export function IntoleranceDialog({
   }
 
   function handleRemoveSynonym(synonym: string) {
-    const currentSynonyms = form.getValues("synonyms");
+    const currentSynonyms = form.getValues("synonyms") || [];
     form.setValue(
       "synonyms",
       currentSynonyms.filter((s) => s !== synonym)
@@ -222,7 +221,7 @@ export function IntoleranceDialog({
                           Add
                         </Button>
                       </div>
-                      {field.value.length > 0 && (
+                      {field.value && field.value.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {field.value.map((synonym) => (
                             <Badge key={synonym} variant="secondary">

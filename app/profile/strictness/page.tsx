@@ -102,7 +102,7 @@ export default function StrictnessEditorPage() {
           profile_name: strictness.name || "Diario",
           block_traces: strictness.block_traces,
           block_same_line: strictness.block_same_line,
-          e_numbers_uncertain: strictness.e_numbers_uncertain,
+          e_numbers_uncertain: strictness.e_numbers_uncertain as "allow" | "warn" | "block",
           min_model_confidence: strictness.min_model_confidence,
           residual_protein_ppm: strictness.residual_protein_ppm_default,
           pediatric_mode: strictness.pediatric_mode,

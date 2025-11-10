@@ -26,9 +26,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { X } from "lucide-react";
+import { Combobox, type ComboboxOption } from "@/components/ui/combobox";
+import { X, Sparkles } from "lucide-react";
 import { eNumberSchema, type ENumberFormData } from "@/lib/admin/validation";
-import { type ENumber, createENumber, updateENumber } from "@/lib/admin/api-client";
+import {
+  type ENumber,
+  createENumber,
+  updateENumber,
+  fetchOrigins,
+  fetchAllergens,
+  type AllergenType,
+} from "@/lib/admin/api-client";
 
 interface ENumberDialogProps {
   open: boolean;
@@ -44,13 +52,16 @@ export function ENumberDialog({
   onSuccess,
 }: ENumberDialogProps) {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [originInput, setOriginInput] = React.useState("");
-  const [allergenInput, setAllergenInput] = React.useState("");
+
+  // Autocomplete data
+  const [origins, setOrigins] = React.useState<Array<{ origin: string; count: number }>>([]);
+  const [allergens, setAllergens] = React.useState<AllergenType[]>([]);
+  const [isLoadingData, setIsLoadingData] = React.useState(false);
 
   const isEditing = !!eNumber;
 
   const form = useForm<ENumberFormData>({
-    resolver: zodResolver(eNumberSchema),
+    resolver: zodResolver(eNumberSchema) as any,
     defaultValues: eNumber
       ? {
           code: eNumber.code,
@@ -69,6 +80,25 @@ export function ENumberDialog({
           notes: "",
         },
   });
+
+  // Fetch autocomplete data when dialog opens
+  React.useEffect(() => {
+    if (open) {
+      setIsLoadingData(true);
+      Promise.all([fetchOrigins(), fetchAllergens()])
+        .then(([originsData, allergensData]) => {
+          setOrigins(originsData);
+          setAllergens(allergensData);
+        })
+        .catch((error) => {
+          console.error("Failed to load autocomplete data:", error);
+          toast.error("Error al cargar datos de autocompletado");
+        })
+        .finally(() => {
+          setIsLoadingData(false);
+        });
+    }
+  }, [open]);
 
   async function onSubmit(data: ENumberFormData) {
     try {
@@ -99,34 +129,12 @@ export function ENumberDialog({
     }
   }
 
-  function handleAddOrigin() {
-    const trimmed = originInput.trim();
-    if (!trimmed) return;
-
-    const currentOrigins = form.getValues("likely_origins");
-    if (!currentOrigins.includes(trimmed)) {
-      form.setValue("likely_origins", [...currentOrigins, trimmed]);
-      setOriginInput("");
-    }
-  }
-
   function handleRemoveOrigin(origin: string) {
     const currentOrigins = form.getValues("likely_origins");
     form.setValue(
       "likely_origins",
       currentOrigins.filter((o) => o !== origin)
     );
-  }
-
-  function handleAddAllergen() {
-    const trimmed = allergenInput.trim();
-    if (!trimmed) return;
-
-    const currentAllergens = form.getValues("linked_allergen_keys");
-    if (!currentAllergens.includes(trimmed)) {
-      form.setValue("linked_allergen_keys", [...currentAllergens, trimmed]);
-      setAllergenInput("");
-    }
   }
 
   function handleRemoveAllergen(key: string) {
@@ -136,6 +144,19 @@ export function ENumberDialog({
       currentAllergens.filter((k) => k !== key)
     );
   }
+
+  // Prepare options for Combobox
+  const originOptions: ComboboxOption[] = origins.map((o) => ({
+    value: o.origin,
+    label: o.origin,
+    description: `Usado en ${o.count} número(s) E`,
+  }));
+
+  const allergenOptions: ComboboxOption[] = allergens.map((a) => ({
+    value: a.key,
+    label: a.name_es,
+    description: a.key,
+  }));
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,27 +218,32 @@ export function ENumberDialog({
               name="likely_origins"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Likely Origins</FormLabel>
+                  <FormLabel>Orígenes Probables</FormLabel>
                   <div className="space-y-2">
                     <div className="flex gap-2">
-                      <Input
-                        placeholder="e.g., soja, girasol, huevo"
-                        value={originInput}
-                        onChange={(e) => setOriginInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleAddOrigin();
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleAddOrigin}
-                      >
-                        Add
-                      </Button>
+                      <div className="flex-1">
+                        <Combobox
+                          options={originOptions}
+                          value=""
+                          onValueChange={(value) => {
+                            const currentOrigins = form.getValues("likely_origins");
+                            if (!currentOrigins.includes(value)) {
+                              form.setValue("likely_origins", [...currentOrigins, value]);
+                            }
+                          }}
+                          placeholder="Seleccionar origen..."
+                          searchPlaceholder="Buscar origen..."
+                          emptyMessage="No se encontraron orígenes"
+                          allowCustom={true}
+                          onCustomValue={(value) => {
+                            const currentOrigins = form.getValues("likely_origins");
+                            if (!currentOrigins.includes(value)) {
+                              form.setValue("likely_origins", [...currentOrigins, value]);
+                            }
+                          }}
+                          disabled={isLoadingData}
+                        />
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {field.value.map((origin) => (
@@ -235,7 +261,7 @@ export function ENumberDialog({
                     </div>
                   </div>
                   <FormDescription>
-                    Possible sources of this additive (e.g., soja, huevo)
+                    Posibles fuentes de este aditivo (ej., soja, huevo)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -248,45 +274,59 @@ export function ENumberDialog({
               name="linked_allergen_keys"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Linked Allergen Keys</FormLabel>
+                  <FormLabel className="flex items-center gap-2">
+                    Alérgenos Vinculados
+                    <Sparkles className="h-4 w-4 text-yellow-500" />
+                  </FormLabel>
                   <div className="space-y-2">
                     <div className="flex gap-2">
-                      <Input
-                        placeholder="e.g., soja, huevo, leche"
-                        value={allergenInput}
-                        onChange={(e) => setAllergenInput(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            handleAddAllergen();
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={handleAddAllergen}
-                      >
-                        Add
-                      </Button>
+                      <div className="flex-1">
+                        <Combobox
+                          options={allergenOptions}
+                          value=""
+                          onValueChange={(value) => {
+                            const currentAllergens = form.getValues("linked_allergen_keys");
+                            if (!currentAllergens.includes(value)) {
+                              form.setValue("linked_allergen_keys", [...currentAllergens, value]);
+                            }
+                          }}
+                          placeholder="Seleccionar alérgeno..."
+                          searchPlaceholder="Buscar alérgeno..."
+                          emptyMessage="No se encontraron alérgenos"
+                          allowCustom={true}
+                          onCustomValue={(value) => {
+                            // For now, add custom value directly
+                            // TODO: In future, show inline creation dialog
+                            const currentAllergens = form.getValues("linked_allergen_keys");
+                            if (!currentAllergens.includes(value)) {
+                              form.setValue("linked_allergen_keys", [...currentAllergens, value]);
+                              toast.info(`Nota: "${value}" será agregado. Asegúrate de que exista en Diccionarios > Alérgenos.`);
+                            }
+                          }}
+                          disabled={isLoadingData}
+                        />
+                      </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {field.value.map((key) => (
-                        <Badge key={key} variant="default">
-                          {key}
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveAllergen(key)}
-                            className="ml-1 hover:text-destructive-foreground"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
+                      {field.value.map((key) => {
+                        const allergen = allergens.find((a) => a.key === key);
+                        return (
+                          <Badge key={key} variant={allergen ? "default" : "outline"}>
+                            {allergen ? allergen.name_es : key}
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAllergen(key)}
+                              className="ml-1 hover:text-destructive-foreground"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </Badge>
+                        );
+                      })}
                     </div>
                   </div>
                   <FormDescription>
-                    Allergen keys that this additive may contain
+                    Claves de alérgenos que este aditivo puede contener
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

@@ -28,14 +28,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { allergenTypeSchema } from "@/lib/admin/validation";
-import { createAllergen, updateAllergen } from "@/lib/admin/api-client";
-import type { AllergenType } from "@/lib/supabase/types";
+import { createAllergen, updateAllergen, type AllergenType } from "@/lib/admin/api-client";
 
 type AllergenFormData = {
   key: string;
   name_es: string;
   notes: string | null;
-  synonyms: string[];
+  synonyms: string[] | null;
 };
 
 interface AllergenDialogProps {
@@ -57,7 +56,7 @@ export function AllergenDialog({
   const isEditing = !!allergen;
 
   const form = useForm<AllergenFormData>({
-    resolver: zodResolver(allergenTypeSchema),
+    resolver: zodResolver(allergenTypeSchema) as any,
     defaultValues: allergen
       ? {
           key: allergen.key,
@@ -118,7 +117,7 @@ export function AllergenDialog({
     const trimmed = synonymInput.trim();
     if (!trimmed) return;
 
-    const currentSynonyms = form.getValues("synonyms");
+    const currentSynonyms = form.getValues("synonyms") || [];
     if (!currentSynonyms.includes(trimmed)) {
       form.setValue("synonyms", [...currentSynonyms, trimmed]);
       setSynonymInput("");
@@ -128,7 +127,7 @@ export function AllergenDialog({
   }
 
   function handleRemoveSynonym(synonym: string) {
-    const currentSynonyms = form.getValues("synonyms");
+    const currentSynonyms = form.getValues("synonyms") || [];
     form.setValue(
       "synonyms",
       currentSynonyms.filter((s) => s !== synonym)
@@ -222,7 +221,7 @@ export function AllergenDialog({
                           Add
                         </Button>
                       </div>
-                      {field.value.length > 0 && (
+                      {field.value && field.value.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {field.value.map((synonym) => (
                             <Badge key={synonym} variant="secondary">

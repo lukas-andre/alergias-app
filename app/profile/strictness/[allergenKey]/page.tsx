@@ -107,7 +107,7 @@ export default function AllergenOverrideEditorPage() {
           setGlobalSettings({
             block_traces: strictness.block_traces,
             block_same_line: strictness.block_same_line,
-            e_numbers_uncertain: strictness.e_numbers_uncertain,
+            e_numbers_uncertain: strictness.e_numbers_uncertain as "allow" | "warn" | "block",
             residual_protein_ppm_default: strictness.residual_protein_ppm_default,
           });
         }
@@ -123,7 +123,7 @@ export default function AllergenOverrideEditorPage() {
         if (override) {
           setOverrideBlockTraces(override.block_traces);
           setOverrideBlockSameLine(override.block_same_line);
-          setOverrideENumbers(override.e_numbers_uncertain);
+          setOverrideENumbers(override.e_numbers_uncertain as "allow" | "warn" | "block" | null);
           setOverridePpm(override.residual_protein_ppm);
           setNotes(override.notes || "");
         }

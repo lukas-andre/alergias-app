@@ -26,8 +26,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { dietTypeSchema } from "@/lib/admin/validation";
-import { createDiet, updateDiet } from "@/lib/admin/api-client";
-import type { DietType } from "@/lib/supabase/types";
+import { createDiet, updateDiet, type DietType } from "@/lib/admin/api-client";
 
 type DietFormData = {
   key: string;
@@ -53,7 +52,7 @@ export function DietDialog({
   const isEditing = !!diet;
 
   const form = useForm<DietFormData>({
-    resolver: zodResolver(dietTypeSchema),
+    resolver: zodResolver(dietTypeSchema) as any,
     defaultValues: diet
       ? {
           key: diet.key,

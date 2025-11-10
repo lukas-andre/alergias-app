@@ -79,6 +79,16 @@ export async function deleteENumber(code: string): Promise<void> {
   return handleResponse<void>(response);
 }
 
+export interface OriginWithCount {
+  origin: string;
+  count: number;
+}
+
+export async function fetchOrigins(): Promise<OriginWithCount[]> {
+  const response = await fetch("/api/admin/e-numbers/origins");
+  return handleResponse<OriginWithCount[]>(response);
+}
+
 // ============================================================================
 // Allergen Types API
 // ============================================================================

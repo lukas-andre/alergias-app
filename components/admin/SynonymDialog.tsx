@@ -75,7 +75,7 @@ export function SynonymDialog({
   const isEditing = !!synonym;
 
   const form = useForm<SynonymFormData>({
-    resolver: zodResolver(allergenSynonymSchema),
+    resolver: zodResolver(allergenSynonymSchema) as any,
     defaultValues: synonym
       ? {
           allergen_id: synonym.allergen_id,
