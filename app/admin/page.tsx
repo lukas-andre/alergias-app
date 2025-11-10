@@ -1,7 +1,8 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Hash, BookOpen, FileText, Settings, ScrollText } from "lucide-react";
+import { Hash, BookOpen, FileText, Settings, ScrollText, Utensils, AlertCircle } from "lucide-react";
+import { t } from "@/lib/admin/translations";
 
 export const metadata = {
   title: "Admin Dashboard - AlergiasCL",
@@ -28,41 +29,41 @@ export default async function AdminDashboard() {
 
   const stats = [
     {
-      title: "E-numbers",
+      title: t("dashboard.eNumbersCard"),
       value: eNumberCount || 0,
-      description: "Registered additives",
+      description: t("dashboard.eNumbersDesc"),
       icon: Hash,
       href: "/admin/e-numbers",
       priority: 1,
     },
     {
-      title: "Allergen Types",
+      title: t("dashboard.allergensCard"),
       value: allergenCount || 0,
-      description: "Allergen dictionary entries",
-      icon: BookOpen,
+      description: t("dashboard.allergensDesc"),
+      icon: AlertCircle,
       href: "/admin/dictionaries",
       priority: 2,
     },
     {
-      title: "Diet Types",
+      title: t("dashboard.dietsCard"),
       value: dietCount || 0,
-      description: "Available diet categories",
-      icon: BookOpen,
+      description: t("dashboard.dietsDesc"),
+      icon: Utensils,
       href: "/admin/dictionaries",
       priority: 2,
     },
     {
-      title: "Intolerance Types",
+      title: t("dashboard.intolerancesCard"),
       value: intoleranceCount || 0,
-      description: "Intolerance dictionary entries",
+      description: t("dashboard.intolerancesDesc"),
       icon: BookOpen,
       href: "/admin/dictionaries",
       priority: 2,
     },
     {
-      title: "Synonyms",
+      title: t("dashboard.synonymsCard"),
       value: synonymCount || 0,
-      description: "Allergen synonyms for matching",
+      description: t("dashboard.synonymsDesc"),
       icon: FileText,
       href: "/admin/synonyms",
       priority: 3,
@@ -72,9 +73,9 @@ export default async function AdminDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("dashboard.title")}</h1>
         <p className="text-muted-foreground mt-2">
-          Overview of dictionary and system data
+          {t("dashboard.description")}
         </p>
       </div>
 
@@ -92,7 +93,7 @@ export default async function AdminDashboard() {
                   <div className="flex items-center gap-2">
                     {stat.priority === 1 && (
                       <Badge variant="default" className="text-xs">
-                        Priority
+                        {t("nav.priority1")}
                       </Badge>
                     )}
                     <Icon className="h-4 w-4 text-muted-foreground" />
@@ -113,9 +114,9 @@ export default async function AdminDashboard() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>{t("dashboard.quickActions")}</CardTitle>
           <CardDescription>
-            Common administrative tasks
+            {t("dashboard.quickActionsDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -126,9 +127,9 @@ export default async function AdminDashboard() {
             >
               <Hash className="h-4 w-4" />
               <div className="flex-1">
-                <div className="font-medium">Manage E-numbers</div>
+                <div className="font-medium">{t("dashboard.manageENumbers")}</div>
                 <div className="text-sm text-muted-foreground">
-                  Add, edit, or remove food additives
+                  {t("dashboard.manageENumbersDesc")}
                 </div>
               </div>
             </a>
@@ -138,9 +139,9 @@ export default async function AdminDashboard() {
             >
               <BookOpen className="h-4 w-4" />
               <div className="flex-1">
-                <div className="font-medium">Edit Dictionaries</div>
+                <div className="font-medium">{t("dashboard.editDictionaries")}</div>
                 <div className="text-sm text-muted-foreground">
-                  Manage allergens, diets, and intolerances
+                  {t("dashboard.editDictionariesDesc")}
                 </div>
               </div>
             </a>
@@ -150,9 +151,9 @@ export default async function AdminDashboard() {
             >
               <FileText className="h-4 w-4" />
               <div className="flex-1">
-                <div className="font-medium">Manage Synonyms</div>
+                <div className="font-medium">{t("dashboard.manageSynonyms")}</div>
                 <div className="text-sm text-muted-foreground">
-                  Add alternative names for better matching
+                  {t("dashboard.manageSynonymsDesc")}
                 </div>
               </div>
             </a>
@@ -162,9 +163,9 @@ export default async function AdminDashboard() {
             >
               <Settings className="h-4 w-4" />
               <div className="flex-1">
-                <div className="font-medium">System Settings</div>
+                <div className="font-medium">{t("dashboard.systemSettings")}</div>
                 <div className="text-sm text-muted-foreground">
-                  Configure feature flags and app behavior
+                  {t("dashboard.systemSettingsDesc")}
                 </div>
               </div>
             </a>
@@ -174,9 +175,9 @@ export default async function AdminDashboard() {
             >
               <ScrollText className="h-4 w-4" />
               <div className="flex-1">
-                <div className="font-medium">View Audit Log</div>
+                <div className="font-medium">{t("dashboard.viewAuditLog")}</div>
                 <div className="text-sm text-muted-foreground">
-                  Review all dictionary changes
+                  {t("dashboard.viewAuditLogDesc")}
                 </div>
               </div>
             </a>

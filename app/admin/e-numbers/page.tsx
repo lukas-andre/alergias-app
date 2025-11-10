@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ENumberDialog } from "@/components/admin/ENumberDialog";
 import { ENumberDeleteDialog } from "@/components/admin/ENumberDeleteDialog";
 import { type ENumber, fetchENumbers, deleteENumber } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 export default function ENumbersPage() {
   const [eNumbers, setENumbers] = React.useState<ENumber[]>([]);
@@ -29,7 +30,7 @@ export default function ENumbersPage() {
       setENumbers(data);
     } catch (error) {
       console.error("Failed to load e-numbers:", error);
-      toast.error("Failed to load e-numbers");
+      toast.error(t("eNumbers.failedToLoad"));
     } finally {
       setIsLoading(false);
     }
@@ -52,12 +53,12 @@ export default function ENumbersPage() {
 
     try {
       await deleteENumber(deletingENumber.code);
-      toast.success(`E-number ${deletingENumber.code} deleted`);
+      toast.success(t("eNumbers.deleted", { code: deletingENumber.code }));
       setDeletingENumber(null);
       await loadENumbers();
     } catch (error) {
       console.error("Failed to delete e-number:", error);
-      toast.error("Failed to delete e-number");
+      toast.error(t("eNumbers.failedToDelete"));
     }
   }
 
@@ -71,19 +72,19 @@ export default function ENumbersPage() {
   const columns: DataTableColumn<ENumber>[] = [
     {
       key: "code",
-      label: "Code",
+      label: t("eNumbers.colCode"),
       render: (row) => (
         <span className="font-mono font-semibold">{row.code}</span>
       ),
     },
     {
       key: "name_es",
-      label: "Name (ES)",
+      label: t("eNumbers.colName"),
       render: (row) => row.name_es,
     },
     {
       key: "origins",
-      label: "Origins",
+      label: t("eNumbers.colOrigins"),
       render: (row) => (
         <div className="flex flex-wrap gap-1">
           {row.likely_origins.slice(0, 3).map((origin) => (
@@ -101,11 +102,11 @@ export default function ENumbersPage() {
     },
     {
       key: "allergens",
-      label: "Linked Allergens",
+      label: t("eNumbers.colLinkedAllergens"),
       render: (row) => (
         <div className="flex flex-wrap gap-1">
           {row.linked_allergen_keys.length === 0 ? (
-            <span className="text-sm text-muted-foreground">None</span>
+            <span className="text-sm text-muted-foreground">{t("common.none")}</span>
           ) : (
             <>
               {row.linked_allergen_keys.slice(0, 2).map((key) => (
@@ -125,13 +126,13 @@ export default function ENumbersPage() {
     },
     {
       key: "protein_risk",
-      label: "Protein Risk",
+      label: t("eNumbers.colProteinRisk"),
       render: (row) => (
         <Badge
           variant={row.residual_protein_risk ? "destructive" : "outline"}
           className="text-xs"
         >
-          {row.residual_protein_risk ? "Yes" : "No"}
+          {row.residual_protein_risk ? t("common.yes") : t("common.no")}
         </Badge>
       ),
       className: "text-center",
@@ -141,12 +142,12 @@ export default function ENumbersPage() {
   // Define row actions
   const actions: DataTableAction<ENumber>[] = [
     {
-      label: "Edit",
+      label: t("common.edit"),
       variant: "ghost",
       onClick: handleEdit,
     },
     {
-      label: "Delete",
+      label: t("common.delete"),
       variant: "destructive",
       onClick: handleDelete,
     },
@@ -157,14 +158,14 @@ export default function ENumbersPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">E-numbers</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("eNumbers.title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Manage food additives and their allergen links
+            {t("eNumbers.description")}
           </p>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Add E-number
+          {t("eNumbers.addButton")}
         </Button>
       </div>
 
@@ -173,8 +174,8 @@ export default function ENumbersPage() {
         data={eNumbers}
         columns={columns}
         actions={actions}
-        searchPlaceholder="Search by code or name..."
-        emptyMessage="No E-numbers found. Create one to get started."
+        searchPlaceholder={t("eNumbers.searchPlaceholder")}
+        emptyMessage={t("eNumbers.emptyMessage")}
         isLoading={isLoading}
         getRowKey={(row) => row.code}
       />
