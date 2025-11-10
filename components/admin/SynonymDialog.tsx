@@ -31,15 +31,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { allergenSynonymSchema } from "@/lib/admin/validation";
+import { allergenSynonymSchema, type AllergenSynonymFormData } from "@/lib/admin/validation";
 import { createSynonym, updateSynonym, type AllergenType } from "@/lib/admin/api-client";
-
-type SynonymFormData = {
-  allergen_id: string;
-  surface: string;
-  locale: string;
-  weight: number;
-};
 
 interface SynonymWithAllergen {
   id: string;
@@ -74,8 +67,8 @@ export function SynonymDialog({
 
   const isEditing = !!synonym;
 
-  const form = useForm<SynonymFormData>({
-    resolver: zodResolver(allergenSynonymSchema) as any,
+  const form = useForm<AllergenSynonymFormData>({
+    resolver: zodResolver(allergenSynonymSchema),
     defaultValues: synonym
       ? {
           allergen_id: synonym.allergen_id,
@@ -109,7 +102,7 @@ export function SynonymDialog({
     }
   }, [open, synonym, form]);
 
-  async function onSubmit(data: SynonymFormData) {
+  async function onSubmit(data: AllergenSynonymFormData) {
     try {
       setIsSubmitting(true);
 

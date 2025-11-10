@@ -33,8 +33,8 @@ export const eNumberSchema = z.object({
 
 export const eNumberUpdateSchema = eNumberSchema.partial().omit({ code: true });
 
-export type ENumberFormData = z.infer<typeof eNumberSchema>;
-export type ENumberUpdateData = z.infer<typeof eNumberUpdateSchema>;
+export type ENumberFormData = z.input<typeof eNumberSchema>;
+export type ENumberUpdateData = z.input<typeof eNumberUpdateSchema>;
 
 // ============================================================================
 // Allergen Types
@@ -56,8 +56,8 @@ export const allergenTypeSchema = z.object({
 
 export const allergenTypeUpdateSchema = allergenTypeSchema.partial().omit({ key: true });
 
-export type AllergenTypeFormData = z.infer<typeof allergenTypeSchema>;
-export type AllergenTypeUpdateData = z.infer<typeof allergenTypeUpdateSchema>;
+export type AllergenTypeFormData = z.input<typeof allergenTypeSchema>;
+export type AllergenTypeUpdateData = z.input<typeof allergenTypeUpdateSchema>;
 
 // ============================================================================
 // Diet Types
@@ -78,8 +78,8 @@ export const dietTypeSchema = z.object({
 
 export const dietTypeUpdateSchema = dietTypeSchema.partial().omit({ key: true });
 
-export type DietTypeFormData = z.infer<typeof dietTypeSchema>;
-export type DietTypeUpdateData = z.infer<typeof dietTypeUpdateSchema>;
+export type DietTypeFormData = z.input<typeof dietTypeSchema>;
+export type DietTypeUpdateData = z.input<typeof dietTypeUpdateSchema>;
 
 // ============================================================================
 // Intolerance Types
@@ -101,8 +101,8 @@ export const intoleranceTypeSchema = z.object({
 
 export const intoleranceTypeUpdateSchema = intoleranceTypeSchema.partial().omit({ key: true });
 
-export type IntoleranceTypeFormData = z.infer<typeof intoleranceTypeSchema>;
-export type IntoleranceTypeUpdateData = z.infer<typeof intoleranceTypeUpdateSchema>;
+export type IntoleranceTypeFormData = z.input<typeof intoleranceTypeSchema>;
+export type IntoleranceTypeUpdateData = z.input<typeof intoleranceTypeUpdateSchema>;
 
 // ============================================================================
 // Allergen Synonyms
@@ -128,8 +128,8 @@ export const allergenSynonymSchema = z.object({
 
 export const allergenSynonymUpdateSchema = allergenSynonymSchema.partial();
 
-export type AllergenSynonymFormData = z.infer<typeof allergenSynonymSchema>;
-export type AllergenSynonymUpdateData = z.infer<typeof allergenSynonymUpdateSchema>;
+export type AllergenSynonymFormData = z.input<typeof allergenSynonymSchema>;
+export type AllergenSynonymUpdateData = z.input<typeof allergenSynonymUpdateSchema>;
 
 // ============================================================================
 // App Settings

@@ -27,15 +27,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { intoleranceTypeSchema } from "@/lib/admin/validation";
+import { intoleranceTypeSchema, type IntoleranceTypeFormData } from "@/lib/admin/validation";
 import { createIntolerance, updateIntolerance, type IntoleranceType } from "@/lib/admin/api-client";
-
-type IntoleranceFormData = {
-  key: string;
-  name_es: string;
-  notes: string | null;
-  synonyms: string[] | null;
-};
 
 interface IntoleranceDialogProps {
   open: boolean;
@@ -55,8 +48,8 @@ export function IntoleranceDialog({
 
   const isEditing = !!intolerance;
 
-  const form = useForm<IntoleranceFormData>({
-    resolver: zodResolver(intoleranceTypeSchema) as any,
+  const form = useForm<IntoleranceTypeFormData>({
+    resolver: zodResolver(intoleranceTypeSchema),
     defaultValues: intolerance
       ? {
           key: intolerance.key,
@@ -90,7 +83,7 @@ export function IntoleranceDialog({
     }
   }, [open, intolerance, form]);
 
-  async function onSubmit(data: IntoleranceFormData) {
+  async function onSubmit(data: IntoleranceTypeFormData) {
     try {
       setIsSubmitting(true);
 

@@ -61,7 +61,7 @@ export function ENumberDialog({
   const isEditing = !!eNumber;
 
   const form = useForm<ENumberFormData>({
-    resolver: zodResolver(eNumberSchema) as any,
+    resolver: zodResolver(eNumberSchema),
     defaultValues: eNumber
       ? {
           code: eNumber.code,

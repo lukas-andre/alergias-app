@@ -25,14 +25,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { dietTypeSchema } from "@/lib/admin/validation";
+import { dietTypeSchema, type DietTypeFormData } from "@/lib/admin/validation";
 import { createDiet, updateDiet, type DietType } from "@/lib/admin/api-client";
-
-type DietFormData = {
-  key: string;
-  name_es: string;
-  description: string | null;
-};
 
 interface DietDialogProps {
   open: boolean;
@@ -51,8 +45,8 @@ export function DietDialog({
 
   const isEditing = !!diet;
 
-  const form = useForm<DietFormData>({
-    resolver: zodResolver(dietTypeSchema) as any,
+  const form = useForm<DietTypeFormData>({
+    resolver: zodResolver(dietTypeSchema),
     defaultValues: diet
       ? {
           key: diet.key,
@@ -82,7 +76,7 @@ export function DietDialog({
     }
   }, [open, diet, form]);
 
-  async function onSubmit(data: DietFormData) {
+  async function onSubmit(data: DietTypeFormData) {
     try {
       setIsSubmitting(true);
 

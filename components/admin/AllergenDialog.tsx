@@ -27,15 +27,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { allergenTypeSchema } from "@/lib/admin/validation";
+import { allergenTypeSchema, type AllergenTypeFormData } from "@/lib/admin/validation";
 import { createAllergen, updateAllergen, type AllergenType } from "@/lib/admin/api-client";
-
-type AllergenFormData = {
-  key: string;
-  name_es: string;
-  notes: string | null;
-  synonyms: string[] | null;
-};
 
 interface AllergenDialogProps {
   open: boolean;
@@ -55,8 +48,8 @@ export function AllergenDialog({
 
   const isEditing = !!allergen;
 
-  const form = useForm<AllergenFormData>({
-    resolver: zodResolver(allergenTypeSchema) as any,
+  const form = useForm<AllergenTypeFormData>({
+    resolver: zodResolver(allergenTypeSchema),
     defaultValues: allergen
       ? {
           key: allergen.key,
@@ -90,7 +83,7 @@ export function AllergenDialog({
     }
   }, [open, allergen, form]);
 
-  async function onSubmit(data: AllergenFormData) {
+  async function onSubmit(data: AllergenTypeFormData) {
     try {
       setIsSubmitting(true);
 
