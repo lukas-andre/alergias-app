@@ -24,6 +24,7 @@ import {
   type DietType,
   type IntoleranceType,
 } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 export default function DictionariesPage() {
   const [activeTab, setActiveTab] = React.useState("allergens");
@@ -64,7 +65,7 @@ export default function DictionariesPage() {
       setAllergens(data);
     } catch (error: any) {
       console.error("Error loading allergens:", error);
-      toast.error("Failed to load allergens");
+      toast.error(t("dictionaries.allergens.failedToLoad"));
     } finally {
       setIsLoadingAllergens(false);
     }
@@ -88,12 +89,12 @@ export default function DictionariesPage() {
 
     try {
       await deleteAllergen(deletingAllergen.id);
-      toast.success(`Allergen "${deletingAllergen.name_es}" deleted successfully`);
+      toast.success(t("dictionaries.allergens.deleted", { name: deletingAllergen.name_es }));
       setDeletingAllergen(null);
       loadAllergens();
     } catch (error: any) {
       console.error("Error deleting allergen:", error);
-      toast.error(error.message || "Failed to delete allergen");
+      toast.error(error.message || t("dictionaries.allergens.failedToDelete"));
     }
   }
 
@@ -105,7 +106,7 @@ export default function DictionariesPage() {
       setDiets(data);
     } catch (error: any) {
       console.error("Error loading diets:", error);
-      toast.error("Failed to load diets");
+      toast.error(t("dictionaries.diets.failedToLoad"));
     } finally {
       setIsLoadingDiets(false);
     }
@@ -129,12 +130,12 @@ export default function DictionariesPage() {
 
     try {
       await deleteDiet(deletingDiet.id);
-      toast.success(`Diet "${deletingDiet.name_es}" deleted successfully`);
+      toast.success(t("dictionaries.diets.deleted", { name: deletingDiet.name_es }));
       setDeletingDiet(null);
       loadDiets();
     } catch (error: any) {
       console.error("Error deleting diet:", error);
-      toast.error(error.message || "Failed to delete diet");
+      toast.error(error.message || t("dictionaries.diets.failedToDelete"));
     }
   }
 
@@ -146,7 +147,7 @@ export default function DictionariesPage() {
       setIntolerances(data);
     } catch (error: any) {
       console.error("Error loading intolerances:", error);
-      toast.error("Failed to load intolerances");
+      toast.error(t("dictionaries.intolerances.failedToLoad"));
     } finally {
       setIsLoadingIntolerances(false);
     }
@@ -170,12 +171,12 @@ export default function DictionariesPage() {
 
     try {
       await deleteIntolerance(deletingIntolerance.id);
-      toast.success(`Intolerance "${deletingIntolerance.name_es}" deleted successfully`);
+      toast.success(t("dictionaries.intolerances.deleted", { name: deletingIntolerance.name_es }));
       setDeletingIntolerance(null);
       loadIntolerances();
     } catch (error: any) {
       console.error("Error deleting intolerance:", error);
-      toast.error(error.message || "Failed to delete intolerance");
+      toast.error(error.message || t("dictionaries.intolerances.failedToDelete"));
     }
   }
 
@@ -183,21 +184,21 @@ export default function DictionariesPage() {
   const allergenColumns: DataTableColumn<AllergenType>[] = [
     {
       key: "key",
-      label: "Key",
+      label: t("dictionaries.colKey"),
       render: (row) => <span className="font-mono text-sm">{row.key}</span>,
     },
     {
       key: "name_es",
-      label: "Name",
+      label: t("dictionaries.colName"),
       render: (row) => <span className="font-medium">{row.name_es}</span>,
     },
     {
       key: "synonyms",
-      label: "Synonyms",
+      label: t("dictionaries.colSynonyms"),
       render: (row) => {
         const synonyms = row.synonyms || [];
         if (synonyms.length === 0) {
-          return <span className="text-muted-foreground text-sm">None</span>;
+          return <span className="text-muted-foreground text-sm">{t("common.none")}</span>;
         }
         return (
           <div className="flex flex-wrap gap-1">
@@ -217,7 +218,7 @@ export default function DictionariesPage() {
     },
     {
       key: "notes",
-      label: "Notes",
+      label: t("dictionaries.colNotes"),
       render: (row) => {
         if (!row.notes) {
           return <span className="text-muted-foreground text-sm">—</span>;
@@ -230,12 +231,12 @@ export default function DictionariesPage() {
 
   const allergenActions: DataTableAction<AllergenType>[] = [
     {
-      label: "Edit",
+      label: t("common.edit"),
       variant: "ghost",
       onClick: handleEditAllergen,
     },
     {
-      label: "Delete",
+      label: t("common.delete"),
       variant: "destructive",
       onClick: handleDeleteAllergen,
     },
@@ -244,17 +245,17 @@ export default function DictionariesPage() {
   const dietColumns: DataTableColumn<DietType>[] = [
     {
       key: "key",
-      label: "Key",
+      label: t("dictionaries.colKey"),
       render: (row) => <span className="font-mono text-sm">{row.key}</span>,
     },
     {
       key: "name_es",
-      label: "Name",
+      label: t("dictionaries.colName"),
       render: (row) => <span className="font-medium">{row.name_es}</span>,
     },
     {
       key: "description",
-      label: "Description",
+      label: t("dictionaries.colDescription"),
       render: (row) => {
         if (!row.description) {
           return <span className="text-muted-foreground text-sm">—</span>;
@@ -270,12 +271,12 @@ export default function DictionariesPage() {
 
   const dietActions: DataTableAction<DietType>[] = [
     {
-      label: "Edit",
+      label: t("common.edit"),
       variant: "ghost",
       onClick: handleEditDiet,
     },
     {
-      label: "Delete",
+      label: t("common.delete"),
       variant: "destructive",
       onClick: handleDeleteDiet,
     },
@@ -284,21 +285,21 @@ export default function DictionariesPage() {
   const intoleranceColumns: DataTableColumn<IntoleranceType>[] = [
     {
       key: "key",
-      label: "Key",
+      label: t("dictionaries.colKey"),
       render: (row) => <span className="font-mono text-sm">{row.key}</span>,
     },
     {
       key: "name_es",
-      label: "Name",
+      label: t("dictionaries.colName"),
       render: (row) => <span className="font-medium">{row.name_es}</span>,
     },
     {
       key: "synonyms",
-      label: "Synonyms",
+      label: t("dictionaries.colSynonyms"),
       render: (row) => {
         const synonyms = row.synonyms || [];
         if (synonyms.length === 0) {
-          return <span className="text-muted-foreground text-sm">None</span>;
+          return <span className="text-muted-foreground text-sm">{t("common.none")}</span>;
         }
         return (
           <div className="flex flex-wrap gap-1">
@@ -318,7 +319,7 @@ export default function DictionariesPage() {
     },
     {
       key: "notes",
-      label: "Notes",
+      label: t("dictionaries.colNotes"),
       render: (row) => {
         if (!row.notes) {
           return <span className="text-muted-foreground text-sm">—</span>;
@@ -331,12 +332,12 @@ export default function DictionariesPage() {
 
   const intoleranceActions: DataTableAction<IntoleranceType>[] = [
     {
-      label: "Edit",
+      label: t("common.edit"),
       variant: "ghost",
       onClick: handleEditIntolerance,
     },
     {
-      label: "Delete",
+      label: t("common.delete"),
       variant: "destructive",
       onClick: handleDeleteIntolerance,
     },
@@ -345,9 +346,9 @@ export default function DictionariesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Dictionaries</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("dictionaries.title")}</h1>
         <p className="text-muted-foreground mt-2">
-          Manage allergens, diets, and intolerances used throughout the application
+          {t("dictionaries.description")}
         </p>
       </div>
 
@@ -355,30 +356,32 @@ export default function DictionariesPage() {
         <div className="flex items-center justify-between">
           <TabsList>
             <TabsTrigger value="allergens">
-              Allergens ({allergens.length})
+              {t("dictionaries.allergens.tab", { count: allergens.length })}
             </TabsTrigger>
-            <TabsTrigger value="diets">Diets ({diets.length})</TabsTrigger>
+            <TabsTrigger value="diets">
+              {t("dictionaries.diets.tab", { count: diets.length })}
+            </TabsTrigger>
             <TabsTrigger value="intolerances">
-              Intolerances ({intolerances.length})
+              {t("dictionaries.intolerances.tab", { count: intolerances.length })}
             </TabsTrigger>
           </TabsList>
 
           {activeTab === "allergens" && (
             <Button onClick={handleCreateAllergen}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Allergen
+              {t("dictionaries.allergens.addButton")}
             </Button>
           )}
           {activeTab === "diets" && (
             <Button onClick={handleCreateDiet}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Diet
+              {t("dictionaries.diets.addButton")}
             </Button>
           )}
           {activeTab === "intolerances" && (
             <Button onClick={handleCreateIntolerance}>
               <Plus className="h-4 w-4 mr-2" />
-              Add Intolerance
+              {t("dictionaries.intolerances.addButton")}
             </Button>
           )}
         </div>
@@ -388,7 +391,7 @@ export default function DictionariesPage() {
             data={allergens}
             columns={allergenColumns}
             actions={allergenActions}
-            searchPlaceholder="Search allergens by key or name..."
+            searchPlaceholder={t("dictionaries.allergens.searchPlaceholder")}
             searchFn={(allergen, query) => {
               const q = query.toLowerCase();
               return (
@@ -398,7 +401,7 @@ export default function DictionariesPage() {
               );
             }}
             isLoading={isLoadingAllergens}
-            emptyMessage="No allergens found. Add your first allergen to get started."
+            emptyMessage={t("dictionaries.allergens.emptyMessage")}
             getRowKey={(row) => row.id}
           />
         </TabsContent>
@@ -408,7 +411,7 @@ export default function DictionariesPage() {
             data={diets}
             columns={dietColumns}
             actions={dietActions}
-            searchPlaceholder="Search diets by key or name..."
+            searchPlaceholder={t("dictionaries.diets.searchPlaceholder")}
             searchFn={(diet, query) => {
               const q = query.toLowerCase();
               return (
@@ -418,7 +421,7 @@ export default function DictionariesPage() {
               );
             }}
             isLoading={isLoadingDiets}
-            emptyMessage="No diets found. Add your first diet to get started."
+            emptyMessage={t("dictionaries.diets.emptyMessage")}
             getRowKey={(row) => row.id}
           />
         </TabsContent>
@@ -428,7 +431,7 @@ export default function DictionariesPage() {
             data={intolerances}
             columns={intoleranceColumns}
             actions={intoleranceActions}
-            searchPlaceholder="Search intolerances by key or name..."
+            searchPlaceholder={t("dictionaries.intolerances.searchPlaceholder")}
             searchFn={(intolerance, query) => {
               const q = query.toLowerCase();
               return (
@@ -438,7 +441,7 @@ export default function DictionariesPage() {
               );
             }}
             isLoading={isLoadingIntolerances}
-            emptyMessage="No intolerances found. Add your first intolerance to get started."
+            emptyMessage={t("dictionaries.intolerances.emptyMessage")}
             getRowKey={(row) => row.id}
           />
         </TabsContent>

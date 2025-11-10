@@ -23,6 +23,7 @@ import {
   deleteSynonym,
   type AllergenType,
 } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 interface SynonymWithAllergen {
   id: string;
@@ -63,7 +64,7 @@ export default function SynonymsPage() {
       setAllergens(data);
     } catch (error: any) {
       console.error("Error loading allergens:", error);
-      toast.error("Failed to load allergens");
+      toast.error(t("synonyms.failedToLoadAllergens"));
     }
   }
 
@@ -75,7 +76,7 @@ export default function SynonymsPage() {
       setSynonyms(data);
     } catch (error: any) {
       console.error("Error loading synonyms:", error);
-      toast.error("Failed to load synonyms");
+      toast.error(t("synonyms.failedToLoad"));
     } finally {
       setIsLoading(false);
     }
@@ -99,27 +100,27 @@ export default function SynonymsPage() {
 
     try {
       await deleteSynonym(deletingSynonym.id);
-      toast.success(`Synonym "${deletingSynonym.surface}" deleted successfully`);
+      toast.success(t("synonyms.deleted", { surface: deletingSynonym.surface }));
       setDeletingSynonym(null);
       loadSynonyms();
     } catch (error: any) {
       console.error("Error deleting synonym:", error);
-      toast.error(error.message || "Failed to delete synonym");
+      toast.error(error.message || t("synonyms.failedToDelete"));
     }
   }
 
   const columns: DataTableColumn<SynonymWithAllergen>[] = [
     {
       key: "surface",
-      label: "Surface (Synonym)",
+      label: t("synonyms.colSurface"),
       render: (row) => <span className="font-medium">{row.surface}</span>,
     },
     {
       key: "allergen",
-      label: "Allergen",
+      label: t("synonyms.colAllergen"),
       render: (row) => {
         if (!row.allergen_types) {
-          return <span className="text-muted-foreground text-sm">Unknown</span>;
+          return <span className="text-muted-foreground text-sm">{t("common.unknown")}</span>;
         }
         return (
           <div className="flex flex-col gap-1">
@@ -133,7 +134,7 @@ export default function SynonymsPage() {
     },
     {
       key: "locale",
-      label: "Locale",
+      label: t("synonyms.colLocale"),
       render: (row) => (
         <Badge variant="outline" className="text-xs">
           {row.locale}
@@ -142,7 +143,7 @@ export default function SynonymsPage() {
     },
     {
       key: "weight",
-      label: "Weight",
+      label: t("synonyms.colWeight"),
       render: (row) => {
         const variant =
           row.weight === 3
@@ -161,12 +162,12 @@ export default function SynonymsPage() {
 
   const actions: DataTableAction<SynonymWithAllergen>[] = [
     {
-      label: "Edit",
+      label: t("common.edit"),
       variant: "ghost",
       onClick: handleEdit,
     },
     {
-      label: "Delete",
+      label: t("common.delete"),
       variant: "destructive",
       onClick: handleDelete,
     },
@@ -181,27 +182,27 @@ export default function SynonymsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Allergen Synonyms</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("synonyms.title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Manage alternative names for allergen matching with trigram search
+            {t("synonyms.description")}
           </p>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-2" />
-          Add Synonym
+          {t("synonyms.addButton")}
         </Button>
       </div>
 
       <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
         <Filter className="h-4 w-4 text-muted-foreground" />
         <div className="flex-1 flex items-center gap-2">
-          <span className="text-sm font-medium">Filter by allergen:</span>
+          <span className="text-sm font-medium">{t("synonyms.filterLabel")}</span>
           <Select value={selectedAllergenId} onValueChange={setSelectedAllergenId}>
             <SelectTrigger className="w-[300px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Allergens</SelectItem>
+              <SelectItem value="all">{t("synonyms.allAllergens")}</SelectItem>
               {allergens.map((allergen) => (
                 <SelectItem key={allergen.id} value={allergen.id}>
                   {allergen.name_es} ({allergen.key})
@@ -210,14 +211,14 @@ export default function SynonymsPage() {
             </SelectContent>
           </Select>
         </div>
-        <Badge variant="secondary">{filteredSynonyms.length} synonyms</Badge>
+        <Badge variant="secondary">{t("synonyms.synonymCount", { count: filteredSynonyms.length })}</Badge>
       </div>
 
       <DataTable
         data={filteredSynonyms}
         columns={columns}
         actions={actions}
-        searchPlaceholder="Search synonyms by surface or allergen..."
+        searchPlaceholder={t("synonyms.searchPlaceholder")}
         searchFn={(synonym, query) => {
           const q = query.toLowerCase();
           return (
@@ -229,8 +230,8 @@ export default function SynonymsPage() {
         isLoading={isLoading}
         emptyMessage={
           selectedAllergenId === "all"
-            ? "No synonyms found. Add your first synonym to get started."
-            : "No synonyms found for the selected allergen."
+            ? t("synonyms.emptyMessage")
+            : t("synonyms.emptyMessageFiltered")
         }
         getRowKey={(row) => row.id}
       />
