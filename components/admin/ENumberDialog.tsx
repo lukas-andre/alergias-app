@@ -37,6 +37,7 @@ import {
   fetchAllergens,
   type AllergenType,
 } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 interface ENumberDialogProps {
   open: boolean;
@@ -107,15 +108,21 @@ export function ENumberDialog({
       if (isEditing) {
         await updateENumber(eNumber.code, {
           name_es: data.name_es,
-          likely_origins: data.likely_origins,
-          linked_allergen_keys: data.linked_allergen_keys,
-          residual_protein_risk: data.residual_protein_risk,
+          likely_origins: data.likely_origins || [],
+          linked_allergen_keys: data.linked_allergen_keys || [],
+          residual_protein_risk: data.residual_protein_risk ?? false,
           notes: data.notes || null,
         });
-        toast.success(`E-number ${data.code} updated successfully`);
+        toast.success(t("eNumbers.updated", { code: data.code }));
       } else {
-        await createENumber(data);
-        toast.success(`E-number ${data.code} created successfully`);
+        await createENumber({
+          ...data,
+          likely_origins: data.likely_origins || [],
+          linked_allergen_keys: data.linked_allergen_keys || [],
+          residual_protein_risk: data.residual_protein_risk ?? false,
+          notes: data.notes || null,
+        });
+        toast.success(t("eNumbers.created", { code: data.code }));
       }
 
       form.reset();
@@ -123,14 +130,14 @@ export function ENumberDialog({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Failed to save e-number:", error);
-      toast.error(error.message || "Failed to save e-number");
+      toast.error(error.message || t("eNumbers.failedToSave"));
     } finally {
       setIsSubmitting(false);
     }
   }
 
   function handleRemoveOrigin(origin: string) {
-    const currentOrigins = form.getValues("likely_origins");
+    const currentOrigins = form.getValues("likely_origins") || [];
     form.setValue(
       "likely_origins",
       currentOrigins.filter((o) => o !== origin)
@@ -138,7 +145,7 @@ export function ENumberDialog({
   }
 
   function handleRemoveAllergen(key: string) {
-    const currentAllergens = form.getValues("linked_allergen_keys");
+    const currentAllergens = form.getValues("linked_allergen_keys") || [];
     form.setValue(
       "linked_allergen_keys",
       currentAllergens.filter((k) => k !== key)
@@ -163,12 +170,12 @@ export function ENumberDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? `Edit ${eNumber.code}` : "Create E-number"}
+            {isEditing ? t("eNumbers.dialogEditTitle", { code: eNumber.code }) : t("eNumbers.dialogCreateTitle")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the E-number information below."
-              : "Add a new E-number to the database."}
+              ? t("eNumbers.dialogUpdateDesc")
+              : t("eNumbers.dialogCreateDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -180,17 +187,17 @@ export function ENumberDialog({
               name="code"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Code</FormLabel>
+                  <FormLabel>{t("eNumbers.fieldCode")}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="E322"
+                      placeholder={t("eNumbers.fieldCodePlaceholder")}
                       {...field}
                       disabled={isEditing}
                       className="font-mono"
                     />
                   </FormControl>
                   <FormDescription>
-                    Format: E followed by numbers (e.g., E322, E110a)
+                    {t("eNumbers.fieldCodeDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -203,9 +210,9 @@ export function ENumberDialog({
               name="name_es"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name (Spanish)</FormLabel>
+                  <FormLabel>{t("eNumbers.fieldName")}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Lecitina" {...field} />
+                    <Input placeholder={t("eNumbers.fieldNamePlaceholder")} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -226,7 +233,7 @@ export function ENumberDialog({
                           options={originOptions}
                           value=""
                           onValueChange={(value) => {
-                            const currentOrigins = form.getValues("likely_origins");
+                            const currentOrigins = form.getValues("likely_origins") || [];
                             if (!currentOrigins.includes(value)) {
                               form.setValue("likely_origins", [...currentOrigins, value]);
                             }
@@ -236,7 +243,7 @@ export function ENumberDialog({
                           emptyMessage="No se encontraron orígenes"
                           allowCustom={true}
                           onCustomValue={(value) => {
-                            const currentOrigins = form.getValues("likely_origins");
+                            const currentOrigins = form.getValues("likely_origins") || [];
                             if (!currentOrigins.includes(value)) {
                               form.setValue("likely_origins", [...currentOrigins, value]);
                             }
@@ -246,7 +253,7 @@ export function ENumberDialog({
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {field.value.map((origin) => (
+                      {field.value?.map((origin) => (
                         <Badge key={origin} variant="secondary">
                           {origin}
                           <button
@@ -285,7 +292,7 @@ export function ENumberDialog({
                           options={allergenOptions}
                           value=""
                           onValueChange={(value) => {
-                            const currentAllergens = form.getValues("linked_allergen_keys");
+                            const currentAllergens = form.getValues("linked_allergen_keys") || [];
                             if (!currentAllergens.includes(value)) {
                               form.setValue("linked_allergen_keys", [...currentAllergens, value]);
                             }
@@ -297,7 +304,7 @@ export function ENumberDialog({
                           onCustomValue={(value) => {
                             // For now, add custom value directly
                             // TODO: In future, show inline creation dialog
-                            const currentAllergens = form.getValues("linked_allergen_keys");
+                            const currentAllergens = form.getValues("linked_allergen_keys") || [];
                             if (!currentAllergens.includes(value)) {
                               form.setValue("linked_allergen_keys", [...currentAllergens, value]);
                               toast.info(`Nota: "${value}" será agregado. Asegúrate de que exista en Diccionarios > Alérgenos.`);
@@ -308,7 +315,7 @@ export function ENumberDialog({
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      {field.value.map((key) => {
+                      {field.value?.map((key) => {
                         const allergen = allergens.find((a) => a.key === key);
                         return (
                           <Badge key={key} variant={allergen ? "default" : "outline"}>
@@ -341,10 +348,10 @@ export function ENumberDialog({
                 <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
                   <div className="space-y-0.5">
                     <FormLabel className="text-base">
-                      Residual Protein Risk
+                      {t("eNumbers.fieldProteinRisk")}
                     </FormLabel>
                     <FormDescription>
-                      Does this additive carry a risk of residual proteins from its source?
+                      {t("eNumbers.fieldProteinRiskDesc")}
                     </FormDescription>
                   </div>
                   <FormControl>
@@ -363,10 +370,10 @@ export function ENumberDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (Optional)</FormLabel>
+                  <FormLabel>{t("eNumbers.fieldNotes")}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Additional information about this E-number..."
+                      placeholder={t("eNumbers.fieldNotesPlaceholder")}
                       className="resize-none"
                       rows={3}
                       {...field}
@@ -385,14 +392,14 @@ export function ENumberDialog({
                 onClick={() => onOpenChange(false)}
                 disabled={isSubmitting}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? "Saving..."
+                  ? t("common.saving")
                   : isEditing
-                    ? "Update"
-                    : "Create"}
+                    ? t("common.update")
+                    : t("common.create")}
               </Button>
             </DialogFooter>
           </form>

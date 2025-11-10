@@ -4,6 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { t } from "@/lib/admin/translations";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -107,11 +108,19 @@ export function SynonymDialog({
       setIsSubmitting(true);
 
       if (isEditing) {
-        await updateSynonym(synonym.id, data);
-        toast.success(`Synonym "${data.surface}" updated successfully`);
+        await updateSynonym(synonym.id, {
+          ...data,
+          locale: data.locale ?? "es-CL",
+          weight: data.weight ?? 1,
+        });
+        toast.success(t("dictionaries.synonymUpdated", { surface: data.surface }));
       } else {
-        await createSynonym(data);
-        toast.success(`Synonym "${data.surface}" created successfully`);
+        await createSynonym({
+          ...data,
+          locale: data.locale ?? "es-CL",
+          weight: data.weight ?? 1,
+        });
+        toast.success(t("dictionaries.synonymCreated", { surface: data.surface }));
       }
 
       form.reset();
@@ -119,7 +128,7 @@ export function SynonymDialog({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error saving synonym:", error);
-      toast.error(error.message || "Failed to save synonym");
+      toast.error(error.message || t("dictionaries.synonymFailedSave"));
     } finally {
       setIsSubmitting(false);
     }
@@ -130,12 +139,12 @@ export function SynonymDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Synonym" : "Create Synonym"}
+            {isEditing ? t("dictionaries.editSynonym") : t("dictionaries.createSynonym")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the synonym information below."
-              : "Add a new synonym for allergen matching."}
+              ? t("dictionaries.updateSynonymDesc")
+              : t("dictionaries.addSynonymDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -146,7 +155,7 @@ export function SynonymDialog({
               name="allergen_id"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Allergen</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldAllergen")}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
                     defaultValue={field.value}
@@ -154,7 +163,7 @@ export function SynonymDialog({
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select an allergen" />
+                        <SelectValue placeholder={t("dictionaries.selectAllergen")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -167,8 +176,8 @@ export function SynonymDialog({
                   </Select>
                   <FormDescription>
                     {isEditing
-                      ? "Cannot change allergen after creation"
-                      : "Select which allergen this synonym belongs to"}
+                      ? t("dictionaries.cannotChangeAllergen")
+                      : t("dictionaries.selectAllergenDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -180,15 +189,15 @@ export function SynonymDialog({
               name="surface"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Surface (Synonym Text)</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldSurface")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g., lacteos, productos lacteos"
+                      placeholder={t("dictionaries.fieldSurfacePlaceholder")}
                     />
                   </FormControl>
                   <FormDescription>
-                    The text that will be matched against product labels
+                    {t("dictionaries.fieldSurfaceDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -200,10 +209,10 @@ export function SynonymDialog({
               name="weight"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Weight (Matching Priority)</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldWeight")}</FormLabel>
                   <Select
                     onValueChange={(value) => field.onChange(Number(value))}
-                    defaultValue={field.value.toString()}
+                    defaultValue={field.value?.toString() || "1"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -211,14 +220,13 @@ export function SynonymDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="1">1 - Low priority</SelectItem>
-                      <SelectItem value="2">2 - Medium priority</SelectItem>
-                      <SelectItem value="3">3 - High priority</SelectItem>
+                      <SelectItem value="1">{t("dictionaries.weightLow")}</SelectItem>
+                      <SelectItem value="2">{t("dictionaries.weightMedium")}</SelectItem>
+                      <SelectItem value="3">{t("dictionaries.weightHigh")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Higher weight = more likely to match. Use 3 for exact
-                    matches, 1 for partial/fuzzy matches.
+                    {t("dictionaries.fieldWeightDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -230,10 +238,10 @@ export function SynonymDialog({
               name="locale"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Locale</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldLocale")}</FormLabel>
                   <Select
                     onValueChange={field.onChange}
-                    defaultValue={field.value}
+                    defaultValue={field.value || "es-CL"}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -241,13 +249,13 @@ export function SynonymDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="es-CL">es-CL (Chilean Spanish)</SelectItem>
-                      <SelectItem value="es-ES">es-ES (Spain Spanish)</SelectItem>
-                      <SelectItem value="en-US">en-US (US English)</SelectItem>
+                      <SelectItem value="es-CL">es-CL (Español Chileno)</SelectItem>
+                      <SelectItem value="es-ES">es-ES (Español España)</SelectItem>
+                      <SelectItem value="en-US">en-US (Inglés EE.UU.)</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription>
-                    Language and region for this synonym
+                    {t("dictionaries.fieldLocaleDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -260,14 +268,14 @@ export function SynonymDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? "Saving..."
+                  ? t("common.saving")
                   : isEditing
-                    ? "Update Synonym"
-                    : "Create Synonym"}
+                    ? t("dictionaries.updateSynonym")
+                    : t("dictionaries.createSynonym")}
               </Button>
             </DialogFooter>
           </form>

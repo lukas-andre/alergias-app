@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { allergenTypeSchema, type AllergenTypeFormData } from "@/lib/admin/validation";
 import { createAllergen, updateAllergen, type AllergenType } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 interface AllergenDialogProps {
   open: boolean;
@@ -88,11 +89,19 @@ export function AllergenDialog({
       setIsSubmitting(true);
 
       if (isEditing) {
-        await updateAllergen(allergen.id, data);
-        toast.success(`Allergen "${data.name_es}" updated successfully`);
+        await updateAllergen(allergen.id, {
+          ...data,
+          notes: data.notes ?? null,
+          synonyms: data.synonyms ?? null,
+        });
+        toast.success(t("dictionaries.allergenUpdated", { name: data.name_es }));
       } else {
-        await createAllergen(data);
-        toast.success(`Allergen "${data.name_es}" created successfully`);
+        await createAllergen({
+          ...data,
+          notes: data.notes ?? null,
+          synonyms: data.synonyms ?? null,
+        });
+        toast.success(t("dictionaries.allergenCreated", { name: data.name_es }));
       }
 
       form.reset();
@@ -100,7 +109,7 @@ export function AllergenDialog({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error saving allergen:", error);
-      toast.error(error.message || "Failed to save allergen");
+      toast.error(error.message || t("dictionaries.allergenFailedSave"));
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +124,7 @@ export function AllergenDialog({
       form.setValue("synonyms", [...currentSynonyms, trimmed]);
       setSynonymInput("");
     } else {
-      toast.error("Synonym already exists");
+      toast.error(t("dictionaries.synonymAlreadyExists"));
     }
   }
 
@@ -132,12 +141,12 @@ export function AllergenDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Allergen" : "Create Allergen"}
+            {isEditing ? t("dictionaries.editAllergen") : t("dictionaries.createAllergen")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the allergen information below."
-              : "Add a new allergen to the dictionary."}
+              ? t("dictionaries.updateAllergenDesc")
+              : t("dictionaries.addAllergenDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -148,18 +157,17 @@ export function AllergenDialog({
               name="key"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Key</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldKey")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       disabled={isEditing}
                       className="font-mono"
-                      placeholder="e.g., milk, gluten, peanuts"
+                      placeholder={t("dictionaries.fieldKeyPlaceholderAllergen")}
                     />
                   </FormControl>
                   <FormDescription>
-                    Unique identifier in lowercase (cannot be changed after
-                    creation)
+                    {t("dictionaries.fieldKeyDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -171,15 +179,15 @@ export function AllergenDialog({
               name="name_es"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name (Spanish)</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldName")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g., Leche, Gluten, Maní"
+                      placeholder={t("dictionaries.fieldNamePlaceholderAllergen")}
                     />
                   </FormControl>
                   <FormDescription>
-                    Display name in Spanish (Chilean locale)
+                    {t("dictionaries.fieldNameDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -191,7 +199,7 @@ export function AllergenDialog({
               name="synonyms"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Synonyms</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldSynonyms")}</FormLabel>
                   <FormControl>
                     <div className="space-y-3">
                       <div className="flex gap-2">
@@ -204,14 +212,14 @@ export function AllergenDialog({
                               handleAddSynonym();
                             }
                           }}
-                          placeholder="e.g., lácteos, productos lácteos"
+                          placeholder={t("dictionaries.fieldSynonymsPlaceholderAllergen")}
                         />
                         <Button
                           type="button"
                           variant="outline"
                           onClick={handleAddSynonym}
                         >
-                          Add
+                          {t("common.add")}
                         </Button>
                       </div>
                       {field.value && field.value.length > 0 && (
@@ -233,7 +241,7 @@ export function AllergenDialog({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Alternative names for matching (press Enter to add)
+                    {t("dictionaries.fieldSynonymsDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -245,17 +253,17 @@ export function AllergenDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (optional)</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldNotes")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       value={field.value || ""}
-                      placeholder="Additional information about this allergen..."
+                      placeholder={t("dictionaries.fieldNotesPlaceholderAllergen")}
                       rows={3}
                     />
                   </FormControl>
                   <FormDescription>
-                    Internal notes for reference
+                    {t("dictionaries.fieldNotesDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -268,14 +276,14 @@ export function AllergenDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? "Saving..."
+                  ? t("common.saving")
                   : isEditing
-                    ? "Update Allergen"
-                    : "Create Allergen"}
+                    ? t("dictionaries.updateAllergen")
+                    : t("dictionaries.createAllergen")}
               </Button>
             </DialogFooter>
           </form>

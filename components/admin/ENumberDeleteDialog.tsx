@@ -11,6 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { type ENumber } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 interface ENumberDeleteDialogProps {
   open: boolean;
@@ -29,25 +30,25 @@ export function ENumberDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete E-number {eNumber.code}?</AlertDialogTitle>
+          <AlertDialogTitle>{t("eNumbers.deleteTitle", { code: eNumber.code })}</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete{" "}
+            {t("eNumbers.deleteDesc")}{" "}
             <span className="font-semibold">{eNumber.code} ({eNumber.name_es})</span>{" "}
-            from the database.
+            {t("eNumbers.deleteDescSuffix")}
             {eNumber.linked_allergen_keys.length > 0 && (
               <span className="block mt-2 text-destructive">
-                Warning: This E-number is linked to {eNumber.linked_allergen_keys.length} allergen(s).
+                {t("eNumbers.deleteWarning", { count: eNumber.linked_allergen_keys.length })}
               </span>
             )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Delete
+            {t("common.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

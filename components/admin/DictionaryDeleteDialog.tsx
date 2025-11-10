@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { t } from "@/lib/admin/translations";
 
 interface DictionaryDeleteDialogProps {
   open: boolean;
@@ -29,9 +30,9 @@ export function DictionaryDeleteDialog({
   onConfirm,
 }: DictionaryDeleteDialogProps) {
   const typeLabels = {
-    allergen: "allergen",
-    diet: "diet",
-    intolerance: "intolerance",
+    allergen: t("dictionaries.allergen"),
+    diet: t("dictionaries.diet"),
+    intolerance: t("dictionaries.intolerance"),
   };
 
   const typeLabel = typeLabels[itemType];
@@ -40,27 +41,26 @@ export function DictionaryDeleteDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete {typeLabel}?</AlertDialogTitle>
+          <AlertDialogTitle>{t("dictionaries.deleteItemTitle", { type: typeLabel })}</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the{" "}
+            {t("dictionaries.deleteItemDesc")}{" "}
             {typeLabel}{" "}
             <span className="font-semibold">
               {itemName} ({itemKey})
             </span>{" "}
-            from the database.
+            {t("dictionaries.deleteItemDescSuffix")}
             <span className="block mt-2 text-amber-600 dark:text-amber-500">
-              Warning: This may affect user profiles that reference this{" "}
-              {typeLabel}.
+              {t("dictionaries.deleteItemWarning", { type: typeLabel })}
             </span>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={onConfirm}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            Delete
+            {t("common.delete")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

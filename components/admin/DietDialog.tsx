@@ -4,6 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { t } from "@/lib/admin/translations";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -81,11 +82,17 @@ export function DietDialog({
       setIsSubmitting(true);
 
       if (isEditing) {
-        await updateDiet(diet.id, data);
-        toast.success(`Diet "${data.name_es}" updated successfully`);
+        await updateDiet(diet.id, {
+          ...data,
+          description: data.description ?? null,
+        });
+        toast.success(t("dictionaries.dietUpdated", { name: data.name_es }));
       } else {
-        await createDiet(data);
-        toast.success(`Diet "${data.name_es}" created successfully`);
+        await createDiet({
+          ...data,
+          description: data.description ?? null,
+        });
+        toast.success(t("dictionaries.dietCreated", { name: data.name_es }));
       }
 
       form.reset();
@@ -93,7 +100,7 @@ export function DietDialog({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error saving diet:", error);
-      toast.error(error.message || "Failed to save diet");
+      toast.error(error.message || t("dictionaries.dietFailedSave"));
     } finally {
       setIsSubmitting(false);
     }
@@ -103,11 +110,11 @@ export function DietDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{isEditing ? "Edit Diet" : "Create Diet"}</DialogTitle>
+          <DialogTitle>{isEditing ? t("dictionaries.editDiet") : t("dictionaries.createDiet")}</DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the diet information below."
-              : "Add a new diet to the dictionary."}
+              ? t("dictionaries.updateDietDesc")
+              : t("dictionaries.addDietDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -118,18 +125,17 @@ export function DietDialog({
               name="key"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Key</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldKey")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       disabled={isEditing}
                       className="font-mono"
-                      placeholder="e.g., vegetarian, vegan, keto"
+                      placeholder={t("dictionaries.fieldKeyPlaceholderDiet")}
                     />
                   </FormControl>
                   <FormDescription>
-                    Unique identifier in lowercase (cannot be changed after
-                    creation)
+                    {t("dictionaries.fieldKeyDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -141,15 +147,15 @@ export function DietDialog({
               name="name_es"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name (Spanish)</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldName")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g., Vegetariano, Vegano, Keto"
+                      placeholder={t("dictionaries.fieldNamePlaceholderDiet")}
                     />
                   </FormControl>
                   <FormDescription>
-                    Display name in Spanish (Chilean locale)
+                    {t("dictionaries.fieldNameDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -161,17 +167,17 @@ export function DietDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldDescription")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       value={field.value || ""}
-                      placeholder="Brief description of this diet type..."
+                      placeholder={t("dictionaries.fieldDescriptionPlaceholderDiet")}
                       rows={4}
                     />
                   </FormControl>
                   <FormDescription>
-                    User-facing description of the diet
+                    {t("dictionaries.fieldDescriptionDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -184,14 +190,14 @@ export function DietDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? "Saving..."
+                  ? t("common.saving")
                   : isEditing
-                    ? "Update Diet"
-                    : "Create Diet"}
+                    ? t("dictionaries.updateDiet")
+                    : t("dictionaries.createDiet")}
               </Button>
             </DialogFooter>
           </form>

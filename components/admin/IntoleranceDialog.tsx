@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { X } from "lucide-react";
+import { t } from "@/lib/admin/translations";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -88,11 +89,19 @@ export function IntoleranceDialog({
       setIsSubmitting(true);
 
       if (isEditing) {
-        await updateIntolerance(intolerance.id, data);
-        toast.success(`Intolerance "${data.name_es}" updated successfully`);
+        await updateIntolerance(intolerance.id, {
+          ...data,
+          notes: data.notes ?? null,
+          synonyms: data.synonyms ?? null,
+        });
+        toast.success(t("dictionaries.intoleranceUpdated", { name: data.name_es }));
       } else {
-        await createIntolerance(data);
-        toast.success(`Intolerance "${data.name_es}" created successfully`);
+        await createIntolerance({
+          ...data,
+          notes: data.notes ?? null,
+          synonyms: data.synonyms ?? null,
+        });
+        toast.success(t("dictionaries.intoleranceCreated", { name: data.name_es }));
       }
 
       form.reset();
@@ -100,7 +109,7 @@ export function IntoleranceDialog({
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error saving intolerance:", error);
-      toast.error(error.message || "Failed to save intolerance");
+      toast.error(error.message || t("dictionaries.intoleranceFailedSave"));
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +124,7 @@ export function IntoleranceDialog({
       form.setValue("synonyms", [...currentSynonyms, trimmed]);
       setSynonymInput("");
     } else {
-      toast.error("Synonym already exists");
+      toast.error(t("dictionaries.synonymAlreadyExists"));
     }
   }
 
@@ -132,12 +141,12 @@ export function IntoleranceDialog({
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "Edit Intolerance" : "Create Intolerance"}
+            {isEditing ? t("dictionaries.editIntolerance") : t("dictionaries.createIntolerance")}
           </DialogTitle>
           <DialogDescription>
             {isEditing
-              ? "Update the intolerance information below."
-              : "Add a new intolerance to the dictionary."}
+              ? t("dictionaries.updateIntoleranceDesc")
+              : t("dictionaries.addIntoleranceDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -148,18 +157,17 @@ export function IntoleranceDialog({
               name="key"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Key</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldKey")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       disabled={isEditing}
                       className="font-mono"
-                      placeholder="e.g., lactose, fructose, histamine"
+                      placeholder={t("dictionaries.fieldKeyPlaceholderIntolerance")}
                     />
                   </FormControl>
                   <FormDescription>
-                    Unique identifier in lowercase (cannot be changed after
-                    creation)
+                    {t("dictionaries.fieldKeyDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -171,15 +179,15 @@ export function IntoleranceDialog({
               name="name_es"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Name (Spanish)</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldName")}</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      placeholder="e.g., Lactosa, Fructosa, Histamina"
+                      placeholder={t("dictionaries.fieldNamePlaceholderIntolerance")}
                     />
                   </FormControl>
                   <FormDescription>
-                    Display name in Spanish (Chilean locale)
+                    {t("dictionaries.fieldNameDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -191,7 +199,7 @@ export function IntoleranceDialog({
               name="synonyms"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Synonyms</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldSynonyms")}</FormLabel>
                   <FormControl>
                     <div className="space-y-3">
                       <div className="flex gap-2">
@@ -204,14 +212,14 @@ export function IntoleranceDialog({
                               handleAddSynonym();
                             }
                           }}
-                          placeholder="e.g., intolerancia a la lactosa"
+                          placeholder={t("dictionaries.fieldSynonymsPlaceholderIntolerance")}
                         />
                         <Button
                           type="button"
                           variant="outline"
                           onClick={handleAddSynonym}
                         >
-                          Add
+                          {t("common.add")}
                         </Button>
                       </div>
                       {field.value && field.value.length > 0 && (
@@ -233,7 +241,7 @@ export function IntoleranceDialog({
                     </div>
                   </FormControl>
                   <FormDescription>
-                    Alternative names for matching (press Enter to add)
+                    {t("dictionaries.fieldSynonymsDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -245,17 +253,17 @@ export function IntoleranceDialog({
               name="notes"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Notes (optional)</FormLabel>
+                  <FormLabel>{t("dictionaries.fieldNotes")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       value={field.value || ""}
-                      placeholder="Additional information about this intolerance..."
+                      placeholder={t("dictionaries.fieldNotesPlaceholderIntolerance")}
                       rows={3}
                     />
                   </FormControl>
                   <FormDescription>
-                    Internal notes for reference
+                    {t("dictionaries.fieldNotesDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -268,14 +276,14 @@ export function IntoleranceDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting
-                  ? "Saving..."
+                  ? t("common.saving")
                   : isEditing
-                    ? "Update Intolerance"
-                    : "Create Intolerance"}
+                    ? t("dictionaries.updateIntolerance")
+                    : t("dictionaries.createIntolerance")}
               </Button>
             </DialogFooter>
           </form>
