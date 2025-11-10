@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search } from "lucide-react";
+import { Search, Loader2, FileQuestion } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -127,18 +127,26 @@ export function DataTable<TData extends Record<string, any>>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-32"
                 >
-                  Loading...
+                  <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <p className="text-sm font-medium">Cargando...</p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : filteredData.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={columns.length + (actions ? 1 : 0)}
-                  className="h-24 text-center text-muted-foreground"
+                  className="h-32"
                 >
-                  {searchQuery ? `No results for "${searchQuery}"` : emptyMessage}
+                  <div className="flex flex-col items-center justify-center gap-3 text-muted-foreground">
+                    <FileQuestion className="h-12 w-12 text-muted-foreground/50" />
+                    <p className="text-sm font-medium">
+                      {searchQuery ? `Sin resultados para "${searchQuery}"` : emptyMessage}
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : (
@@ -177,7 +185,7 @@ export function DataTable<TData extends Record<string, any>>({
       {/* Footer with results count */}
       {!isLoading && filteredData.length > 0 && (
         <div className="text-sm text-muted-foreground">
-          Showing {filteredData.length} of {data.length} result{data.length === 1 ? "" : "s"}
+          Mostrando {filteredData.length} de {data.length} resultado{data.length === 1 ? "" : "s"}
         </div>
       )}
     </div>
