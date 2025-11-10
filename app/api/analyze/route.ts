@@ -10,6 +10,7 @@ import {
 import { evaluateRisk } from "@/lib/risk/evaluate";
 import type { ProfilePayload } from "@/lib/risk/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { extractIngredientsViaSDK } from "@/lib/openai/vision";
 import { postProcessIngredients, validateHierarchy } from "@/lib/openai/post-process";
 import { fetchUserProfile } from "@/lib/supabase/queries/profile";
@@ -109,11 +110,21 @@ export async function POST(request: Request) {
 
             const risk = await evaluateRisk(cachedData, profilePayload, eNumberPolicies, supabase);
 
+            // Generate signed URL from source_ref if available
+            let imageUrl: string | undefined;
+            if (cached.source_ref) {
+              const serviceSupabase = createSupabaseServiceClient();
+              const { data: signedData } = await serviceSupabase.storage
+                .from('scan-images')
+                .createSignedUrl(cached.source_ref, 3600);
+              imageUrl = signedData?.signedUrl || undefined;
+            }
+
             viewModel = buildResultViewModel({
               analysis: cachedData,
               risk: risk,
               profile: profilePayload,
-              imageBase64: cached.image_base64 || undefined,
+              imageUrl,
               model,
               costUSD: 0,
               scannedAt: cached.created_at,
@@ -206,7 +217,7 @@ export async function POST(request: Request) {
             analysis: data,
             risk: risk,
             profile: profilePayload,
-            imageBase64: base64,
+            imageUrl: dataUrl,
             model,
             costUSD: tokensUSD,
           });
@@ -217,12 +228,38 @@ export async function POST(request: Request) {
     }
 
     // Persist extraction if user is authenticated
+    let storageImageUrl: string | null = null;
     if (!authError && user) {
       try {
-        await withSpan(
+        const persistResult = await withSpan(
           "extraction.persist",
           { mention_count: data.mentions.length },
           async () => {
+            // Upload image to Storage
+            const fileName = `${user.id}/${crypto.randomUUID()}.jpg`;
+            const serviceSupabase = createSupabaseServiceClient();
+
+            const { data: uploadData, error: uploadError } = await serviceSupabase.storage
+              .from('scan-images')
+              .upload(fileName, buffer, {
+                contentType: mimeType,
+                cacheControl: '3600',
+                upsert: false,
+              });
+
+            if (uploadError) {
+              console.error('Storage upload error:', uploadError);
+              throw new Error(`Failed to upload image: ${uploadError.message}`);
+            }
+
+            const storagePath = uploadData.path;
+
+            // Generate signed URL immediately after upload
+            const { data: signedData } = await serviceSupabase.storage
+              .from('scan-images')
+              .createSignedUrl(storagePath, 3600);
+
+            // Insert extraction with storage path
             const extraction = await insertExtraction(supabase, {
               user_id: user.id,
               origin: "label",
@@ -233,8 +270,7 @@ export async function POST(request: Request) {
               model_confidence: data.quality.confidence,
               final_confidence: viewModel?.verdict.confidence ?? data.quality.confidence,
               label_hash: labelHash,
-              source_ref: null,
-              image_base64: base64,
+              source_ref: storagePath,
             });
 
             extractionId = extraction.id;
@@ -265,10 +301,29 @@ export async function POST(request: Request) {
             if (tokens.length > 0) {
               await insertTokens(supabase, tokens);
             }
+
+            return {
+              storagePath,
+              signedUrl: signedData?.signedUrl || null,
+            };
           }
         );
+
+        // Rebuild viewModel with Storage URL if available
+        if (persistResult?.signedUrl && viewModel && risk && profilePayload) {
+          storageImageUrl = persistResult.signedUrl;
+          viewModel = buildResultViewModel({
+            analysis: data,
+            risk: risk,
+            profile: profilePayload,
+            imageUrl: storageImageUrl,
+            model,
+            costUSD: tokensUSD,
+          });
+        }
       } catch (persistError) {
         console.error("Error persisting extraction:", persistError);
+        // viewModel remains with dataUrl as fallback
       }
     }
 

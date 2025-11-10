@@ -22,13 +22,12 @@ import {
   CardTitle,
   CardContent,
 } from "@/components/ui/card";
-import { useSupabase } from "@/components/SupabaseProvider";
 import { humanizeTimestamp } from "@/lib/utils/humanize-copy";
 
 interface RecentScan {
   id: string;
   created_at: string;
-  image_base64: string | null;
+  imageUrl: string | null;
   final_confidence: number | null;
 }
 
@@ -40,31 +39,22 @@ const verdictFromConfidence = (confidence: number | null): "safe" | "warning" | 
 };
 
 export function RecentScans({ className }: { className?: string }) {
-  const supabase = useSupabase();
   const [scans, setScans] = useState<RecentScan[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadRecentScans() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
+        const response = await fetch("/api/recent-scans");
+
+        if (!response.ok) {
+          console.error("Error loading recent scans:", response.statusText);
           setLoading(false);
           return;
         }
 
-        const { data, error } = await supabase
-          .from("extractions")
-          .select("id, created_at, image_base64, final_confidence")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(3);
-
-        if (error) {
-          console.error("Error loading recent scans:", error);
-        } else {
-          setScans(data || []);
-        }
+        const data = await response.json();
+        setScans(data.scans || []);
       } catch (err) {
         console.error("Error loading recent scans:", err);
       } finally {
@@ -73,7 +63,7 @@ export function RecentScans({ className }: { className?: string }) {
     }
 
     loadRecentScans();
-  }, [supabase]);
+  }, []);
 
   if (loading) {
     return (
@@ -142,9 +132,9 @@ export function RecentScans({ className }: { className?: string }) {
             >
               {/* Thumbnail */}
               <div className="flex-shrink-0 w-12 h-12 rounded-md border border-neutral-200 bg-neutral-50 overflow-hidden">
-                {scan.image_base64 ? (
+                {scan.imageUrl ? (
                   <img
-                    src={`data:image/jpeg;base64,${scan.image_base64}`}
+                    src={scan.imageUrl}
                     alt="Scan thumbnail"
                     className="w-full h-full object-cover"
                   />

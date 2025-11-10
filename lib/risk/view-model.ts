@@ -112,7 +112,7 @@ export function buildResultViewModel({
   analysis,
   risk,
   profile,
-  imageBase64,
+  imageUrl,
   model,
   costUSD,
   scannedAt,
@@ -120,7 +120,7 @@ export function buildResultViewModel({
   analysis: IngredientsResult;
   risk: RiskAssessment;
   profile: ProfilePayload | null;
-  imageBase64?: string | null;
+  imageUrl?: string | null;
   model?: string;
   costUSD?: number;
   scannedAt?: string;
@@ -289,17 +289,12 @@ export function buildResultViewModel({
   // 8. IMAGE
   // ============================================================================
 
-  // Defensive check: strip existing data URL prefix if present to avoid double-prefixing
-  let cleanBase64 = imageBase64;
-  if (cleanBase64) {
-    const dataUrlPrefix = /^data:image\/[^;]+;base64,/;
-    if (dataUrlPrefix.test(cleanBase64)) {
-      cleanBase64 = cleanBase64.replace(dataUrlPrefix, "");
-    }
-  }
-
-  const thumbUrl = cleanBase64 ? `data:image/jpeg;base64,${cleanBase64}` : null;
-  const fullUrl = thumbUrl; // Same for now, could be storage URL in future
+  // imageUrl can be:
+  // - Signed URL from Storage (preferred)
+  // - data:image/jpeg;base64,... (legacy or immediate response)
+  // - null (no image)
+  const thumbUrl = imageUrl || null;
+  const fullUrl = imageUrl || null;
 
   const qualityInfo = confidenceToQuality(analysis.quality.confidence);
 

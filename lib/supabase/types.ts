@@ -262,7 +262,6 @@ export type Database = {
           created_at: string
           final_confidence: number | null
           id: string
-          image_base64: string | null
           label_hash: string | null
           model_confidence: number | null
           ocr_confidence: number | null
@@ -278,7 +277,6 @@ export type Database = {
           created_at?: string
           final_confidence?: number | null
           id?: string
-          image_base64?: string | null
           label_hash?: string | null
           model_confidence?: number | null
           ocr_confidence?: number | null
@@ -294,7 +292,6 @@ export type Database = {
           created_at?: string
           final_confidence?: number | null
           id?: string
-          image_base64?: string | null
           label_hash?: string | null
           model_confidence?: number | null
           ocr_confidence?: number | null
@@ -695,7 +692,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
-      get_my_profile_payload: { Args: Record<string, never>; Returns: Json }
+      get_my_profile_payload: { Args: Record<PropertyKey, never>; Returns: Json }
       get_profile_payload: { Args: { p_user_id: string }; Returns: Json }
       has_role: { Args: { p_role_key: string }; Returns: boolean }
       is_admin: { Args: { uid: string }; Returns: boolean }
@@ -709,7 +706,7 @@ export type Database = {
           weight: number
         }[]
       }
-      show_limit: { Args: Record<string, never>; Returns: number }
+      show_limit: { Args: Record<PropertyKey, never>; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {

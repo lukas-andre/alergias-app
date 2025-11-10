@@ -47,7 +47,7 @@ export async function GET(
       );
     }
 
-    const { extraction } = result;
+    const { extraction, imageUrl } = result;
 
     // Check format (must have mentions array)
     const rawJson = extraction.raw_json as any;
@@ -77,11 +77,12 @@ export async function GET(
         id: extraction.id,
         user_id: extraction.user_id,
         raw_json: extraction.raw_json,
-        image_base64: extraction.image_base64,
+        source_ref: extraction.source_ref,
         created_at: extraction.created_at,
         ocr_confidence: extraction.ocr_confidence,
       },
-      user.id
+      user.id,
+      imageUrl
     );
 
     // Return response matching /api/analyze structure

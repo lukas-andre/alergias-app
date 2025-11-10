@@ -7,11 +7,37 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "../types";
 import type { IngredientsResult } from "@/lib/openai/vision-types";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 type ExtractionInsert = Database["public"]["Tables"]["extractions"]["Insert"];
 type ExtractionRow = Database["public"]["Tables"]["extractions"]["Row"];
 type TokenInsert = Database["public"]["Tables"]["extraction_tokens"]["Insert"];
 type TokenRow = Database["public"]["Tables"]["extraction_tokens"]["Row"];
+
+/**
+ * Generate signed URL for Storage image
+ *
+ * @param storagePath - Path in scan-images bucket (e.g., "user_id/extraction_id.jpg")
+ * @param expiresIn - Expiration time in seconds (default: 3600 = 1 hour)
+ * @returns Signed URL or null if error
+ */
+async function getSignedImageUrl(
+  storagePath: string,
+  expiresIn: number = 3600
+): Promise<string | null> {
+  const supabase = createSupabaseServiceClient();
+
+  const { data, error } = await supabase.storage
+    .from('scan-images')
+    .createSignedUrl(storagePath, expiresIn);
+
+  if (error) {
+    console.error('Error creating signed URL:', error);
+    return null;
+  }
+
+  return data.signedUrl;
+}
 
 /**
  * Check if an extraction exists for this label_hash (cache lookup)
@@ -108,10 +134,7 @@ export async function insertTokens(
  * @param supabase - Supabase client
  * @param extractionId - Extraction UUID
  * @param userId - User ID (for RLS)
- * @returns Extraction with tokens (includes image_base64 if stored)
- *
- * TODO: Migrate to Supabase Storage - image_base64 is technical debt
- * Future: Use source_ref for storage URL instead of base64
+ * @returns Extraction with tokens and signed image URL
  */
 export async function getExtractionById(
   supabase: SupabaseClient<Database>,
@@ -120,6 +143,7 @@ export async function getExtractionById(
 ): Promise<{
   extraction: ExtractionRow;
   tokens: (TokenRow & { allergen_name?: string })[];
+  imageUrl?: string;
 } | null> {
   // Fetch extraction (includes image_base64)
   const { data: extraction, error: extractionError } = await supabase
@@ -161,9 +185,16 @@ export async function getExtractionById(
     allergen_types: undefined, // Remove nested object
   }));
 
+  // Generate signed URL if source_ref exists
+  let imageUrl: string | undefined;
+  if (extraction.source_ref) {
+    imageUrl = await getSignedImageUrl(extraction.source_ref) || undefined;
+  }
+
   return {
     extraction,
     tokens: transformedTokens,
+    imageUrl,
   };
 }
 

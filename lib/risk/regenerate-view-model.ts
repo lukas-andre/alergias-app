@@ -23,7 +23,7 @@ export interface ExtractionRow {
   id: string;
   user_id: string;
   raw_json: IngredientsResult | unknown; // Current format or unknown legacy
-  image_base64: string | null;
+  source_ref: string | null;
   created_at: string;
   ocr_confidence: number | null;
 }
@@ -40,13 +40,15 @@ export interface RegenerateResult {
  * @param supabase - Authenticated Supabase client
  * @param extraction - Extraction row from database
  * @param userId - User ID for profile fetching
+ * @param imageUrl - Optional signed URL for image (if available)
  * @returns Complete viewModel, risk assessment, and profile
  * @throws Error if raw_json is invalid or missing
  */
 export async function regenerateViewModel(
   supabase: SupabaseClient,
   extraction: ExtractionRow,
-  userId: string
+  userId: string,
+  imageUrl?: string
 ): Promise<RegenerateResult> {
   // Validate raw_json is an object
   if (!extraction.raw_json || typeof extraction.raw_json !== "object") {
@@ -86,7 +88,7 @@ export async function regenerateViewModel(
     analysis: analysis,
     risk: risk,
     profile: profilePayload,
-    imageBase64: extraction.image_base64 || undefined,
+    imageUrl,
     model: "gpt-4o", // TODO: Extract from extraction if stored
     costUSD: undefined, // Historical scans don't have cost
     scannedAt: extraction.created_at,
