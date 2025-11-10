@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus } from "lucide-react";
+import { Plus, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -345,11 +345,14 @@ export default function DictionariesPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("dictionaries.title")}</h1>
-        <p className="text-muted-foreground mt-2">
-          {t("dictionaries.description")}
-        </p>
+      <div className="flex items-center gap-3">
+        <BookOpen className="h-8 w-8 text-muted-foreground" />
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">{t("dictionaries.title")}</h1>
+          <p className="text-muted-foreground mt-2">
+            {t("dictionaries.description")}
+          </p>
+        </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">

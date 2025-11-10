@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Filter } from "lucide-react";
+import { Plus, Filter, FileText } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -181,11 +181,14 @@ export default function SynonymsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("synonyms.title")}</h1>
-          <p className="text-muted-foreground mt-2">
-            {t("synonyms.description")}
-          </p>
+        <div className="flex items-center gap-3">
+          <FileText className="h-8 w-8 text-muted-foreground" />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{t("synonyms.title")}</h1>
+            <p className="text-muted-foreground mt-2">
+              {t("synonyms.description")}
+            </p>
+          </div>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-2" />

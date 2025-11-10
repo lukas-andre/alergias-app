@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus } from "lucide-react";
+import { Plus, Hash } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, type DataTableColumn, type DataTableAction } from "@/components/admin/DataTable";
 import { Button } from "@/components/ui/button";
@@ -157,11 +157,14 @@ export default function ENumbersPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("eNumbers.title")}</h1>
-          <p className="text-muted-foreground mt-2">
-            {t("eNumbers.description")}
-          </p>
+        <div className="flex items-center gap-3">
+          <Hash className="h-8 w-8 text-muted-foreground" />
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">{t("eNumbers.title")}</h1>
+            <p className="text-muted-foreground mt-2">
+              {t("eNumbers.description")}
+            </p>
+          </div>
         </div>
         <Button onClick={handleCreate}>
           <Plus className="h-4 w-4 mr-2" />
