@@ -10,6 +10,8 @@
  * - Returns structured matches with confidence
  */
 
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/supabase/types";
 import type { IngredientsResult, Mention, DetectedAllergen } from "@/lib/openai/vision-types";
 import type {
   ProfilePayload,
@@ -25,6 +27,9 @@ import type {
 } from "./types";
 import type { ENumberPolicy } from "@/lib/supabase/queries/enumbers";
 import { DIET_BLOCKS, INTOLERANCE_TRIGGERS } from "@/lib/constants/dietary-rules";
+import { expandAllergenSynonyms, normalizeAllergenKey } from "@/lib/synonyms/expand";
+
+type SupabaseClientType = SupabaseClient<Database>;
 
 const RISK_ORDER: RiskLevel[] = ["low", "medium", "high"];
 
@@ -96,12 +101,18 @@ function computeEffectiveStrictness(
  *
  * Uses structured mentions from Vision API to provide explainable,
  * evidence-based risk assessment.
+ *
+ * @param analysis - Parsed ingredients from OpenAI
+ * @param profile - User profile with allergens, diets, strictness
+ * @param eNumberPolicies - E-number policies for this user
+ * @param supabase - Optional Supabase client for synonym expansion
  */
-export function evaluateRisk(
+export async function evaluateRisk(
   analysis: IngredientsResult,
   profile: ProfilePayload | null,
   eNumberPolicies: ENumberPolicy[] = [],
-): RiskAssessment {
+  supabase?: SupabaseClientType,
+): Promise<RiskAssessment> {
   const reasons: RiskReason[] = [];
   let level: RiskLevel = "low";
 
@@ -152,8 +163,29 @@ export function evaluateRisk(
   const matchedENumbers: MatchedENumber[] = [];
 
   // ============================================================================
-  // 1. ALLERGEN MATCHES
+  // 1. ALLERGEN MATCHES (with DB synonym expansion)
   // ============================================================================
+
+  // Expand synonyms from DB if supabase client provided
+  let synonymMatches = new Map<string, string[]>(); // surface → allergen keys
+  if (supabase && profile) {
+    try {
+      const synonymExpansion = await expandAllergenSynonyms(supabase, analysis.mentions, 0.3);
+
+      // Convert to simple map: surface → allergen keys
+      for (const [surface, matches] of synonymExpansion.entries()) {
+        const allergenKeys = matches
+          .map(m => m.allergenKey)
+          .filter(key => allergenKeyMap.has(normalizeKey(key))); // Only keys in user profile
+
+        if (allergenKeys.length > 0) {
+          synonymMatches.set(surface, allergenKeys);
+        }
+      }
+    } catch (err) {
+      console.error("Error expanding synonyms:", err);
+    }
+  }
 
   const allergenMatches = new Map<string, {
     severity: number;
@@ -163,6 +195,7 @@ export function evaluateRisk(
   }>();
 
   analysis.mentions.forEach((mention, idx) => {
+    // Process OpenAI-detected allergens
     mention.implies_allergens.forEach((allergenRaw) => {
       const allergenNorm = normalizeKey(allergenRaw);
       const originalKey = allergenKeyMap.get(allergenNorm);
@@ -241,6 +274,54 @@ export function evaluateRisk(
         rule,
         confidence,
         evidence: `"${mention.surface}" (${mention.section})`,
+      });
+
+      level = compareRisk(level, decisionToRisk(decision));
+    });
+
+    // ALSO process DB synonym matches for this mention
+    const dbSynonymKeys = synonymMatches.get(mention.surface) || [];
+    dbSynonymKeys.forEach((allergenKey) => {
+      const allergenNorm = normalizeKey(allergenKey);
+      if (allergenMatches.has(allergenNorm)) return; // Already processed via OpenAI
+
+      const originalKey = allergenKeyMap.get(allergenNorm);
+      if (!originalKey) return;
+
+      const severity = allergenSeverity.get(allergenNorm) ?? 0;
+      const effective = computeEffectiveStrictness(profile, originalKey);
+
+      // DB synonyms are treated as explicit matches
+      const via: AllergenVia = "explicit";
+
+      // Track match
+      allergenMatches.set(allergenNorm, {
+        severity,
+        vias: [via],
+        mentionIds: [idx],
+        confidences: [0.85], // High confidence for DB match
+      });
+
+      // Determine decision (same logic as explicit)
+      let decision: RiskDecision = "warn";
+      let rule = "allergen.inline.warn.db_synonym";
+
+      if (severity >= 3 || effective?.anaphylaxis_mode) {
+        decision = "block";
+        rule = "allergen.inline.block.db_synonym";
+      } else if (severity >= 2) {
+        decision = "block";
+        rule = "allergen.inline.block.db_synonym";
+      }
+
+      reasons.push({
+        kind: "allergen",
+        via,
+        mentionIds: [idx],
+        allergenKey: originalKey,
+        rule,
+        confidence: 0.85,
+        evidence: `"${mention.surface}" (DB synonym match)`,
       });
 
       level = compareRisk(level, decisionToRisk(decision));

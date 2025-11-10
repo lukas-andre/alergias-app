@@ -11,6 +11,7 @@ import { evaluateRisk } from "@/lib/risk/evaluate";
 import type { ProfilePayload } from "@/lib/risk/types";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { extractIngredientsViaSDK } from "@/lib/openai/vision";
+import { postProcessIngredients, validateHierarchy } from "@/lib/openai/post-process";
 import { fetchUserProfile } from "@/lib/supabase/queries/profile";
 import { fetchENumberPolicies } from "@/lib/supabase/queries/enumbers";
 import { buildResultViewModel, type ResultViewModel } from "@/lib/risk/view-model";
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
               uniqueENumbers
             );
 
-            const risk = evaluateRisk(cachedData, profilePayload, eNumberPolicies);
+            const risk = await evaluateRisk(cachedData, profilePayload, eNumberPolicies, supabase);
 
             viewModel = buildResultViewModel({
               analysis: cachedData,
@@ -147,7 +148,18 @@ export async function POST(request: Request) {
       })
     );
 
-    const { data, tokensUSD, usage } = response;
+    let { data, tokensUSD, usage } = response;
+
+    // Post-process: expand compound ingredients into hierarchy
+    const processedData = postProcessIngredients(data);
+    const hierarchyWarnings = validateHierarchy(processedData);
+
+    // Add hierarchy warnings to result if any
+    if (hierarchyWarnings.length > 0) {
+      processedData.warnings = [...processedData.warnings, ...hierarchyWarnings];
+    }
+
+    data = processedData;
 
     // Add cost attributes to span (after we have the response)
     // Note: This runs after the span closes, but we set it here for reference
@@ -182,11 +194,11 @@ export async function POST(request: Request) {
             )
           );
 
-          // Evaluate risk
+          // Evaluate risk (with synonym expansion)
           const risk = await withSpan(
             "risk.evaluate",
             { allergen_count: profilePayload.allergens.length },
-            async () => evaluateRisk(data, profilePayload, eNumberPolicies)
+            async () => evaluateRisk(data, profilePayload, eNumberPolicies, supabase)
           );
 
           // Build ViewModel

@@ -66,6 +66,7 @@ export function ResultViewModelRenderer({
           emoji={verdict.emoji}
           scannedAt={meta.scannedAt}
           quality={meta.qualityLabel}
+          minThreshold={verdict.minThreshold}
         />
 
         {/* 2. WHY (Evidence & Explainability) */}

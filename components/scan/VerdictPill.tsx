@@ -23,6 +23,7 @@ export interface VerdictPillProps {
   className?: string;
   scannedAt?: string;
   quality?: string;
+  minThreshold?: number;
 }
 
 const levelStyles = {
@@ -58,6 +59,7 @@ export function VerdictPill({
   className,
   scannedAt,
   quality,
+  minThreshold,
 }: VerdictPillProps) {
   const style = levelStyles[level];
   const Icon = style.Icon;
@@ -134,6 +136,11 @@ export function VerdictPill({
             )}
             <span className="flex items-center gap-1">
               Confianza: {(confidence * 100).toFixed(0)}%
+              {minThreshold !== undefined && (
+                <span className="text-neutral-400">
+                  (mín: {(minThreshold * 100).toFixed(0)}%)
+                </span>
+              )}
             </span>
           </div>
         </div>

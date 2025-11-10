@@ -695,11 +695,21 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
-      get_my_profile_payload: { Args: never; Returns: Json }
+      get_my_profile_payload: { Args: Record<string, never>; Returns: Json }
       get_profile_payload: { Args: { p_user_id: string }; Returns: Json }
       has_role: { Args: { p_role_key: string }; Returns: boolean }
       is_admin: { Args: { uid: string }; Returns: boolean }
-      show_limit: { Args: never; Returns: number }
+      match_allergen_synonyms_fuzzy: {
+        Args: { p_limit?: number; p_min_similarity?: number; p_query: string }
+        Returns: {
+          allergen_key: string
+          locale: string
+          similarity: number
+          synonym_surface: string
+          weight: number
+        }[]
+      }
+      show_limit: { Args: Record<string, never>; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {

@@ -36,6 +36,8 @@ export interface Mention {
   enumbers: string[];                 // E-codes found in this mention
   implies_allergens: string[];        // Allergen keys this mention implies
   evidence: string;                   // Exact text snippet for display
+  parent_canonical?: string;          // OPTIONAL: Canonical form of parent ingredient
+  sub_ingredients?: string[];         // OPTIONAL: List of sub-ingredients found in parentheses
 }
 
 export interface DetectedAllergen {

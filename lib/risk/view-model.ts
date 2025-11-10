@@ -66,6 +66,7 @@ export interface ResultViewModel {
     pills: string[];       // Short tags like ["Leche", "Huevo"]
     confidence: number;
     emoji: string;
+    minThreshold?: number; // User's configured minimum confidence threshold
   };
   why: WhyItem[];
   allergens: {
@@ -139,6 +140,7 @@ export function buildResultViewModel({
     pills: matchedAllergenKeys.slice(0, 3), // Show max 3
     confidence: risk.confidence,
     emoji: riskHumanized.emoji,
+    minThreshold: profile?.strictness?.min_model_confidence,
   };
 
   // ============================================================================

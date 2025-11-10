@@ -78,8 +78,8 @@ export async function regenerateViewModel(
     uniqueENumbers
   );
 
-  // Evaluate risk
-  const risk = evaluateRisk(analysis, profilePayload, eNumberPolicies);
+  // Evaluate risk (with synonym expansion)
+  const risk = await evaluateRisk(analysis, profilePayload, eNumberPolicies, supabase);
 
   // Build view model
   const viewModel = buildResultViewModel({
