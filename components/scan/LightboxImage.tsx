@@ -100,7 +100,7 @@ export function LightboxImage({
             />
 
             {/* Hover overlay */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center pointer-events-none">
               <div className="opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-3 shadow-lg">
                 <ZoomIn className="w-6 h-6 text-neutral-700" />
               </div>

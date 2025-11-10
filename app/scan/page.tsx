@@ -12,7 +12,6 @@ import { ProfileSummary } from "@/components/scan/ProfileSummary";
 import { ScanTips } from "@/components/scan/ScanTips";
 import { RecentScans } from "@/components/scan/RecentScans";
 import { ResultViewModelRenderer } from "@/components/scan/ResultViewModelRenderer";
-import { ReportErrorDialog } from "@/components/feedback/ReportErrorDialog";
 import { useSupabase } from "@/components/SupabaseProvider";
 import type { ProfilePayload } from "@/lib/risk/types";
 import type { ResultViewModel } from "@/lib/risk/view-model";
@@ -48,9 +47,6 @@ export default function ScanPage() {
 
   // Profile state
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
-
-  // Feedback state
-  const [isReportErrorDialogOpen, setIsReportErrorDialogOpen] = useState(false);
 
   const jobId = useRef(0);
   const lastObjectUrl = useRef<string | null>(null);
@@ -343,27 +339,21 @@ export default function ScanPage() {
               <>
                 {viewModelResult ? (
                   <>
-                    <ResultViewModelRenderer viewModel={viewModelResult} />
+                    <ResultViewModelRenderer
+                      viewModel={viewModelResult}
+                      extractionId={extractionId || undefined}
+                    />
 
-                    {/* Actions: View in history and Report error */}
-                    <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
-                      {extractionId && (
+                    {/* Actions: View in history */}
+                    {extractionId && (
+                      <div className="flex justify-center pt-4">
                         <Link href={`/scan/result/${extractionId}`}>
                           <Button variant="outline" size="sm">
                             Ver en Historial
                           </Button>
                         </Link>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsReportErrorDialogOpen(true)}
-                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
-                      >
-                        <AlertTriangle className="h-4 w-4 mr-2" />
-                        Reportar Error
-                      </Button>
-                    </div>
+                      </div>
+                    )}
                   </>
                 ) : error ? (
                   <div className="text-center py-8">
@@ -409,13 +399,6 @@ export default function ScanPage() {
         )}
       </div>
 
-      {/* Report Error Dialog */}
-      <ReportErrorDialog
-        open={isReportErrorDialogOpen}
-        onOpenChange={setIsReportErrorDialogOpen}
-        extractionId={extractionId || undefined}
-        verdictLevel={viewModelResult?.verdict.level}
-      />
     </main>
   );
 }

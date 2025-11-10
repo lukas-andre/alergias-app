@@ -289,7 +289,16 @@ export function buildResultViewModel({
   // 8. IMAGE
   // ============================================================================
 
-  const thumbUrl = imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : null;
+  // Defensive check: strip existing data URL prefix if present to avoid double-prefixing
+  let cleanBase64 = imageBase64;
+  if (cleanBase64) {
+    const dataUrlPrefix = /^data:image\/[^;]+;base64,/;
+    if (dataUrlPrefix.test(cleanBase64)) {
+      cleanBase64 = cleanBase64.replace(dataUrlPrefix, "");
+    }
+  }
+
+  const thumbUrl = cleanBase64 ? `data:image/jpeg;base64,${cleanBase64}` : null;
   const fullUrl = thumbUrl; // Same for now, could be storage URL in future
 
   const qualityInfo = confidenceToQuality(analysis.quality.confidence);

@@ -17,12 +17,16 @@
  * Design: Clean hierarchy, mobile-first, professional
  */
 
+"use client";
+
+import { useState } from "react";
 import { VerdictPill } from "./VerdictPill";
 import { WhyList } from "./WhyList";
 import { IngredientPanel } from "./IngredientPanel";
 import { ENumberTable } from "./ENumberTable";
 import { LightboxImage } from "./LightboxImage";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
@@ -31,15 +35,18 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { AlertTriangle, Info, Utensils, Heart } from "lucide-react";
+import { ReportErrorDialog } from "@/components/feedback/ReportErrorDialog";
 import type { ResultViewModel } from "@/lib/risk/view-model";
 
 export interface ResultViewModelRendererProps {
   viewModel: ResultViewModel;
+  extractionId?: string;
   className?: string;
 }
 
 export function ResultViewModelRenderer({
   viewModel,
+  extractionId,
   className,
 }: ResultViewModelRendererProps) {
   const {
@@ -53,6 +60,8 @@ export function ResultViewModelRenderer({
     image,
     meta,
   } = viewModel;
+
+  const [isReportErrorDialogOpen, setIsReportErrorDialogOpen] = useState(false);
 
   return (
     <div className={className}>
@@ -218,7 +227,28 @@ export function ResultViewModelRenderer({
             qualityLabel={image.qualityLabel}
           />
         )}
+
+        {/* 10. ACTION BUTTONS */}
+        <div className="flex justify-center pt-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsReportErrorDialogOpen(true)}
+            className="text-orange-600 border-orange-200 hover:bg-orange-50"
+          >
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            Reportar Error
+          </Button>
+        </div>
       </div>
+
+      {/* Report Error Dialog */}
+      <ReportErrorDialog
+        open={isReportErrorDialogOpen}
+        onOpenChange={setIsReportErrorDialogOpen}
+        extractionId={extractionId}
+        verdictLevel={verdict.level}
+      />
     </div>
   );
 }

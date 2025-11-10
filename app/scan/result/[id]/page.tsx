@@ -175,7 +175,10 @@ export default function ScanResultPage() {
         </header>
 
         {/* Result Display */}
-        <ResultViewModelRenderer viewModel={viewModel} />
+        <ResultViewModelRenderer
+          viewModel={viewModel}
+          extractionId={extractionId}
+        />
 
         {/* Metadata Footer */}
         {meta && (
