@@ -9,6 +9,7 @@ import {
   Settings,
   ScrollText,
   LayoutDashboard,
+  MessageSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,11 @@ const navItems: NavItem[] = [
     href: "/admin/e-numbers",
     icon: Hash,
     badge: "Prioridad 1",
+  },
+  {
+    label: "Feedback",
+    href: "/admin/feedback",
+    icon: MessageSquare,
   },
   {
     label: "Diccionarios",

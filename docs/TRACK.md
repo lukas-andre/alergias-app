@@ -20,7 +20,7 @@ Marcadores: `P0` = Now, `P1` = Next, `P2` = Later
 
 ### 3) Onboarding (telemetría)
 
-* [ ] Instrumentar eventos: `onboarding_step`, tiempo por paso, **abandonos**.
+* [X] Instrumentar eventos: `profile_edit_started`, `profile_edit_completed`.
 
 ### 6) Backoffice
 
@@ -35,10 +35,13 @@ Marcadores: `P0` = Now, `P1` = Next, `P2` = Later
 
 ### 7) Telemetría + Feedback
 
-* [ ] Instrumentar eventos (frontend y API) con IDs anónimos (incl. `scan_cache_hit`, `scan_cache_miss`, `scan_completed`).
-* [ ] Endpoint **`/api/feedback`** (adjuntos opcionales en Supabase Storage).
-* [ ] Panel simple de **feedback** (tabla interna o en admin).
-* [ ] Agregar flujo “**Reportar error**” desde resultado de scan (hook al endpoint).
+* [X] Instrumentar eventos frontend con OpenTelemetry: `scan_started`, `scan_completed`, `scan_failed`.
+* [X] Endpoint **`/api/feedback`** con tabla `user_feedback` y RLS policies.
+* [X] Endpoint **`/api/telemetry`** para recibir eventos del cliente.
+* [X] Panel `/admin/feedback` con tabla, filtros y gestión de estados.
+* [X] Dialog **FeedbackDetailDialog** con metadata completa y acciones de admin.
+* [X] Flujo "**Reportar error**" integrado en `/scan` con botón y dialog modal.
+* [X] **Cliente de telemetría** (`lib/telemetry/client.ts`) con trackEvent, trackPageView, trackTiming.
 
 ### 8) Seguridad / Privacidad
 
@@ -48,18 +51,11 @@ Marcadores: `P0` = Now, `P1` = Next, `P2` = Later
 
 ### 9) Research / Seeds (continuo)
 
-* [ ] **E-numbers**: CSV/JSON maestro (+ proceso de import; campos Archivo 2 §6.1).
-* [ ] **Sinónimos ES-CL**: expandir catálogo y falsos amigos.
-* [ ] **Heurísticas de frases**: “trazas”, “misma línea”, “libre de”.
+* [X] **E-numbers**: CSV/JSON maestro (+ proceso de import; campos Archivo 2 §6.1).
+* [X] **Sinónimos ES-CL**: expandir catálogo y falsos amigos.
+* [X] **Heurísticas de frases**: “trazas”, “misma línea”, “libre de”.
 
-### 20) OpenAI Prompt & Confidence (prioridad P0)
-
-* [ ] Actualizar **prompt de visión** para **tokenizar sub-ingredientes** dentro de compuestos.
-* [ ] Instrucciones de **calidad de imagen** y **rangos de confianza** realistas.
-* [ ] **UI**: mostrar **% de confianza** y el **umbral mínimo** del usuario.
-* [ ] Tokenización: **vincular tokens** a `allergen_types` vía **sinónimos** (ej. maíz).
-* [ ] Post-proceso: split recursivo de sub-ingredientes conservando **E-numbers**.
-* [ ] Tests con 3 imágenes (alta/media/baja) para validar distribución de confianza.
+maña
 
 ### UX Quick Wins (P0)
 

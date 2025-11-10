@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ImagePicker } from "@/components/ImagePicker";
 import { Stepper } from "@/components/scan/Stepper";
@@ -12,9 +12,11 @@ import { ProfileSummary } from "@/components/scan/ProfileSummary";
 import { ScanTips } from "@/components/scan/ScanTips";
 import { RecentScans } from "@/components/scan/RecentScans";
 import { ResultViewModelRenderer } from "@/components/scan/ResultViewModelRenderer";
+import { ReportErrorDialog } from "@/components/feedback/ReportErrorDialog";
 import { useSupabase } from "@/components/SupabaseProvider";
 import type { ProfilePayload } from "@/lib/risk/types";
 import type { ResultViewModel } from "@/lib/risk/view-model";
+import { trackEvent } from "@/lib/telemetry/client";
 
 type ScanStep = "upload" | "adjust" | "analyze";
 
@@ -46,6 +48,9 @@ export default function ScanPage() {
 
   // Profile state
   const [profile, setProfile] = useState<ProfilePayload | null>(null);
+
+  // Feedback state
+  const [isReportErrorDialogOpen, setIsReportErrorDialogOpen] = useState(false);
 
   const jobId = useRef(0);
   const lastObjectUrl = useRef<string | null>(null);
@@ -150,6 +155,7 @@ export default function ScanPage() {
     async (blob: Blob) => {
       jobId.current += 1;
       const runId = jobId.current;
+      const startTime = Date.now();
 
       abortCurrentJob();
       resetState();
@@ -163,6 +169,14 @@ export default function ScanPage() {
 
       try {
         const { width, height } = await loadImageDimensions(blob);
+
+        // Track scan started
+        trackEvent("scan_started", {
+          source: "web",
+          image_width: width,
+          image_height: height,
+          image_size_bytes: blob.size,
+        });
         if (jobId.current !== runId) return;
 
         abortCurrentJob();
@@ -198,7 +212,21 @@ export default function ScanPage() {
 
         // Check for viewModel in response
         if ("viewModel" in payload && payload.viewModel) {
-          setViewModelResult(payload.viewModel as ResultViewModel);
+          const duration = Date.now() - startTime;
+          const viewModel = payload.viewModel as ResultViewModel;
+
+          // Track scan completed
+          trackEvent("scan_completed", {
+            duration_ms: duration,
+            verdict_level: viewModel.verdict?.level,
+            allergen_count: (viewModel.allergens?.matched?.length || 0) +
+                           (viewModel.allergens?.informational?.length || 0),
+            ingredient_count: viewModel.ingredients?.chips?.length || 0,
+            has_profile: !!profile,
+            cost_usd: payload.tokensUSD,
+          });
+
+          setViewModelResult(viewModel);
           setExtractionId(payload.extraction_id || null);
           setStatus("succeeded");
           setStatusLabel("Resultado listo");
@@ -213,6 +241,18 @@ export default function ScanPage() {
       } catch (cause) {
         if (jobId.current !== runId) return;
         console.error(cause);
+
+        const duration = Date.now() - startTime;
+        const errorMessage = cause instanceof Error ? cause.message : "Unknown error";
+
+        // Track scan failed
+        trackEvent("scan_failed", {
+          duration_ms: duration,
+          error_type: cause instanceof Error ? cause.name : "UnknownError",
+          error_message: errorMessage,
+          stage: status,
+        });
+
         setError(
           cause instanceof Error
             ? cause.message
@@ -223,7 +263,7 @@ export default function ScanPage() {
         abortCurrentJob();
       }
     },
-    [abortCurrentJob, loadImageDimensions, resetState, revokePreview, router]
+    [abortCurrentJob, loadImageDimensions, resetState, revokePreview, router, status, profile]
   );
 
   const handleScanAgain = useCallback(() => {
@@ -305,16 +345,25 @@ export default function ScanPage() {
                   <>
                     <ResultViewModelRenderer viewModel={viewModelResult} />
 
-                    {/* Optional: Link to view in history */}
-                    {extractionId && (
-                      <div className="flex justify-center pt-4">
+                    {/* Actions: View in history and Report error */}
+                    <div className="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+                      {extractionId && (
                         <Link href={`/scan/result/${extractionId}`}>
                           <Button variant="outline" size="sm">
                             Ver en Historial
                           </Button>
                         </Link>
-                      </div>
-                    )}
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsReportErrorDialogOpen(true)}
+                        className="text-orange-600 border-orange-200 hover:bg-orange-50"
+                      >
+                        <AlertTriangle className="h-4 w-4 mr-2" />
+                        Reportar Error
+                      </Button>
+                    </div>
                   </>
                 ) : error ? (
                   <div className="text-center py-8">
@@ -359,6 +408,14 @@ export default function ScanPage() {
           </div>
         )}
       </div>
+
+      {/* Report Error Dialog */}
+      <ReportErrorDialog
+        open={isReportErrorDialogOpen}
+        onOpenChange={setIsReportErrorDialogOpen}
+        extractionId={extractionId || undefined}
+        verdictLevel={viewModelResult?.verdict.level}
+      />
     </main>
   );
 }

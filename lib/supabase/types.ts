@@ -441,6 +441,68 @@ export type Database = {
           },
         ]
       }
+      user_feedback: {
+        Row: {
+          admin_notes: string | null
+          category: string | null
+          created_at: string
+          extraction_id: string | null
+          feedback_type: string
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          screenshot_url: string | null
+          severity: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          category?: string | null
+          created_at?: string
+          extraction_id?: string | null
+          feedback_type: string
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          screenshot_url?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string | null
+          created_at?: string
+          extraction_id?: string | null
+          feedback_type?: string
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          screenshot_url?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_feedback_extraction_id_fkey"
+            columns: ["extraction_id"]
+            isOneToOne: false
+            referencedRelation: "extractions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_profile_allergens: {
         Row: {
           allergen_id: string
@@ -601,7 +663,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_roles_with_email: {
+        Row: {
+          display_name: string | null
+          email: string | null
+          profile_created_at: string | null
+          role_key: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_role_key_fkey"
+            columns: ["role_key"]
+            isOneToOne: false
+            referencedRelation: "app_roles"
+            referencedColumns: ["key"]
+          },
+        ]
+      }
     }
     Functions: {
       decide_e_number: {
@@ -616,11 +695,11 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
-      get_my_profile_payload: { Args: Record<PropertyKey, never>; Returns: Json }
+      get_my_profile_payload: { Args: never; Returns: Json }
       get_profile_payload: { Args: { p_user_id: string }; Returns: Json }
       has_role: { Args: { p_role_key: string }; Returns: boolean }
       is_admin: { Args: { uid: string }; Returns: boolean }
-      show_limit: { Args: Record<PropertyKey, never>; Returns: number }
+      show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {

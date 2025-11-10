@@ -20,6 +20,7 @@ import { useSupabase } from "@/components/SupabaseProvider";
 import { toast } from "sonner";
 import { ProfileEditForm } from "@/components/profile/edit/ProfileEditForm";
 import type { ProfileEditFormData } from "@/lib/schemas/profile-edit.schema";
+import { trackEvent } from "@/lib/telemetry/client";
 
 export default function ProfileEditPage() {
   const supabase = useSupabase();
@@ -71,7 +72,7 @@ export default function ProfileEditPage() {
           .eq("user_id", session.user.id);
 
         // Transform data to form format
-        setInitialData({
+        const formData = {
           basicData: {
             display_name: profile?.display_name || "",
             notes: profile?.notes || "",
@@ -94,6 +95,16 @@ export default function ProfileEditPage() {
               notes: i.notes || "",
             })) || [],
           },
+        };
+
+        setInitialData(formData);
+
+        // Track profile edit started
+        trackEvent("profile_edit_started", {
+          has_display_name: !!profile?.display_name,
+          diet_count: formData.diets.diets.length,
+          allergen_count: formData.allergens.allergens.length,
+          intolerance_count: formData.intolerances.intolerances.length,
         });
       } catch (err) {
         console.error("Error loading profile:", err);
@@ -221,6 +232,15 @@ export default function ProfileEditPage() {
           if (intolerancesError) throw intolerancesError;
         }
       }
+
+      // Track profile edit completed
+      trackEvent("profile_edit_completed", {
+        diet_count: data.diets.diets.length,
+        allergen_count: data.allergens.allergens.length,
+        intolerance_count: data.intolerances.intolerances.length,
+        has_display_name: !!data.basicData.display_name,
+        is_pregnant: data.basicData.pregnant,
+      });
 
       toast.success("✓ Cambios guardados", {
         description: "Tu perfil ha sido actualizado correctamente",
