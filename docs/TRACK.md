@@ -130,10 +130,23 @@ Marcadores: `P0` = Now, `P1` = Next, `P2` = Later
 
 ### 17) Mejoras scanner (deuda y UX)
 
-* [ ] **Entrada de texto** puro en `/scan` (textarea).
-* [ ] **Historial** completo con paginación (“Ver todo”).
-* [ ] **RPC batch** para E-numbers (`decide_e_numbers`) para bajar latencia.
+> 📚 **Plan Completo**: Ver [SCANNER_IMPROVEMENTS.md](./SCANNER_IMPROVEMENTS.md)
+> **Status**: 🚧 Documentado - Listo para implementación (3-4 semanas)
+
+* [ ] ~~**Entrada de texto** puro en `/scan` (textarea).~~ _(Descartado - no era necesario)_
+* [ ] **Historial** completo con paginación ("Ver todo").
+  - Página `/history` con grid de cards
+  - Paginación server-side (20 items/página)
+  - Filtros por fecha, verdict, allergen count
+* [ ] **RPC batch** para E-numbers (`decide_e_numbers_batch`) para bajar latencia.
+  - Nueva función SQL batch (single RPC para todos los E-numbers)
+  - Migración: `decide_e_numbers_batch(p_user_id uuid, p_codes text[])`
+  - **Impacto**: 10x reducción latencia (500ms → 50ms para 10 E-numbers)
 * [ ] **Migrar imágenes** de `image_base64` → **Supabase Storage** (bucket, RLS, backfill, drop columna).
+  - Bucket: `scan-images` con RLS por user_id
+  - 13 imágenes existentes (~1.5MB) a migrar
+  - Script backfill: `scripts/migrate-images-to-storage.ts`
+  - Usar `source_ref` en vez de `image_base64`
 
 ### Auth / UX
 
