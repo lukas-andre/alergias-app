@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import type { AuditEntry } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 interface AuditDetailDialogProps {
   open: boolean;
@@ -81,7 +82,7 @@ export function AuditDetailDialog({
       return (
         <div className="space-y-4">
           <div>
-            <h4 className="text-sm font-semibold mb-2">New Data:</h4>
+            <h4 className="text-sm font-semibold mb-2">{t("audit.newData")}</h4>
             {entry.new_data ? (
               <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded p-4 space-y-3">
                 {Object.entries(entry.new_data as Record<string, any>).map(
@@ -96,7 +97,7 @@ export function AuditDetailDialog({
                 )}
               </div>
             ) : (
-              <p className="text-muted-foreground italic">No data</p>
+              <p className="text-muted-foreground italic">{t("audit.noData")}</p>
             )}
           </div>
         </div>
@@ -107,7 +108,7 @@ export function AuditDetailDialog({
       return (
         <div className="space-y-4">
           <div>
-            <h4 className="text-sm font-semibold mb-2">Deleted Data:</h4>
+            <h4 className="text-sm font-semibold mb-2">{t("audit.deletedData")}</h4>
             {entry.old_data ? (
               <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded p-4 space-y-3">
                 {Object.entries(entry.old_data as Record<string, any>).map(
@@ -122,7 +123,7 @@ export function AuditDetailDialog({
                 )}
               </div>
             ) : (
-              <p className="text-muted-foreground italic">No data</p>
+              <p className="text-muted-foreground italic">{t("audit.noData")}</p>
             )}
           </div>
         </div>
@@ -148,7 +149,7 @@ export function AuditDetailDialog({
         <div className="space-y-4">
           <div>
             <h4 className="text-sm font-semibold mb-2">
-              Changes ({changes.length} fields modified):
+              {t("audit.changes", { count: changes.length })}
             </h4>
             {changes.length > 0 ? (
               <div className="space-y-4">
@@ -160,20 +161,20 @@ export function AuditDetailDialog({
                     <div className="font-mono text-sm font-semibold flex items-center gap-2">
                       {key}
                       <Badge variant="outline" className="text-xs">
-                        Modified
+                        {t("audit.modified")}
                       </Badge>
                     </div>
                     <div className="grid grid-cols-[1fr_auto_1fr] gap-4 items-center">
                       <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 rounded p-3">
                         <div className="text-xs font-semibold text-red-600 mb-1">
-                          Old Value:
+                          {t("audit.oldValue")}
                         </div>
                         {renderValue(oldData[key])}
                       </div>
                       <ArrowRight className="h-4 w-4 text-muted-foreground" />
                       <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-900 rounded p-3">
                         <div className="text-xs font-semibold text-green-600 mb-1">
-                          New Value:
+                          {t("audit.newValue")}
                         </div>
                         {renderValue(newData[key])}
                       </div>
@@ -183,7 +184,7 @@ export function AuditDetailDialog({
               </div>
             ) : (
               <p className="text-muted-foreground italic">
-                No field changes detected
+                {t("audit.noChanges")}
               </p>
             )}
           </div>
@@ -191,7 +192,7 @@ export function AuditDetailDialog({
       );
     }
 
-    return <p className="text-muted-foreground italic">Unknown action type</p>;
+    return <p className="text-muted-foreground italic">{t("audit.unknownAction")}</p>;
   }
 
   return (
@@ -199,7 +200,7 @@ export function AuditDetailDialog({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
-            Audit Entry Details
+            {t("audit.entryDetails")}
             <Badge
               variant="outline"
               className={actionColors[entry.action] || ""}
@@ -208,30 +209,32 @@ export function AuditDetailDialog({
             </Badge>
           </DialogTitle>
           <DialogDescription>
-            Changes made to {entry.table_name} on{" "}
-            {new Date(entry.changed_at).toLocaleString()}
+            {t("audit.changesMade", {
+              table: entry.table_name,
+              date: new Date(entry.changed_at).toLocaleString("es-CL")
+            })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <span className="font-semibold">Table:</span>{" "}
+              <span className="font-semibold">{t("audit.table")}</span>{" "}
               <span className="font-mono">{entry.table_name}</span>
             </div>
             <div>
-              <span className="font-semibold">Row ID:</span>{" "}
+              <span className="font-semibold">{t("audit.rowId")}</span>{" "}
               <span className="font-mono text-xs">
                 {entry.row_id || "N/A"}
               </span>
             </div>
             <div>
-              <span className="font-semibold">Changed By:</span>{" "}
+              <span className="font-semibold">{t("audit.changedBy")}</span>{" "}
               <span className="font-mono text-xs">{entry.changed_by}</span>
             </div>
             <div>
-              <span className="font-semibold">Changed At:</span>{" "}
-              {new Date(entry.changed_at).toLocaleString()}
+              <span className="font-semibold">{t("audit.changedAt")}</span>{" "}
+              {new Date(entry.changed_at).toLocaleString("es-CL")}
             </div>
           </div>
 

@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
+import { t } from "@/lib/admin/translations";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -85,7 +86,7 @@ export function SettingDialog({
         try {
           finalValue = JSON.parse(data.value);
         } catch (error) {
-          setJsonError("Invalid JSON format");
+          setJsonError(t("settings.invalidJson"));
           return;
         }
       }
@@ -95,13 +96,13 @@ export function SettingDialog({
         description: data.description || undefined,
       });
 
-      toast.success(`Setting "${setting.key}" updated successfully`);
+      toast.success(t("settings.settingUpdated", { key: setting.key }));
       form.reset();
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
       console.error("Error updating setting:", error);
-      toast.error(error.message || "Failed to update setting");
+      toast.error(error.message || t("settings.settingFailedUpdate"));
     } finally {
       setIsSubmitting(false);
     }
@@ -113,7 +114,7 @@ export function SettingDialog({
       JSON.parse(value);
       setJsonError(null);
     } catch (error) {
-      setJsonError("Invalid JSON format");
+      setJsonError(t("settings.invalidJson"));
     }
   }
 
@@ -121,9 +122,9 @@ export function SettingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Edit Setting: {setting.key}</DialogTitle>
+          <DialogTitle>{t("settings.editSettingTitle", { key: setting.key })}</DialogTitle>
           <DialogDescription>
-            Update the value and description for this application setting.
+            {t("settings.editSettingDesc")}
           </DialogDescription>
         </DialogHeader>
 
@@ -134,16 +135,16 @@ export function SettingDialog({
               name="value"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Value</FormLabel>
+                  <FormLabel>{t("settings.fieldValue")}</FormLabel>
                   <FormControl>
                     {isBoolean ? (
                       <div className="flex items-center justify-between rounded-lg border p-4">
                         <div>
                           <p className="font-medium">
-                            {field.value ? "Enabled" : "Disabled"}
+                            {field.value ? t("settings.enabled") : t("settings.disabled")}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            Toggle this setting on or off
+                            {t("settings.toggleDesc")}
                           </p>
                         </div>
                         <Switch
@@ -179,10 +180,10 @@ export function SettingDialog({
                     )}
                   </FormControl>
                   <FormDescription>
-                    {isBoolean && "Boolean value (true/false)"}
-                    {isNumber && "Numeric value"}
-                    {isString && "Text value"}
-                    {!isBoolean && !isNumber && !isString && "JSON value"}
+                    {isBoolean && t("settings.booleanValue")}
+                    {isNumber && t("settings.numericValue")}
+                    {isString && t("settings.textValue")}
+                    {!isBoolean && !isNumber && !isString && t("settings.jsonValue")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -194,17 +195,17 @@ export function SettingDialog({
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (optional)</FormLabel>
+                  <FormLabel>{t("settings.fieldDescription")}</FormLabel>
                   <FormControl>
                     <Textarea
                       {...field}
                       value={field.value || ""}
-                      placeholder="Describe what this setting controls..."
+                      placeholder={t("settings.fieldDescriptionPlaceholder")}
                       rows={3}
                     />
                   </FormControl>
                   <FormDescription>
-                    Internal documentation for this setting
+                    {t("settings.fieldDescriptionDesc")}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -217,10 +218,10 @@ export function SettingDialog({
                 variant="outline"
                 onClick={() => onOpenChange(false)}
               >
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button type="submit" disabled={isSubmitting || !!jsonError}>
-                {isSubmitting ? "Saving..." : "Update Setting"}
+                {isSubmitting ? t("common.saving") : t("settings.updateSetting")}
               </Button>
             </DialogFooter>
           </form>
