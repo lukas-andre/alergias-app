@@ -13,10 +13,10 @@ Marcadores: `P0` = Now, `P1` = Next, `P2` = Later
 
 ### 0) Infra / DevOps
 
-* [ ] Agregar **Grafana Cloud** (frontend + server actions).
-* [ ] **CI/CD** completo: build, typecheck, lint, test + **preview** y **gates** a prod (hay que ver si se puede hacer algo con railway ya que estamos usando eso).
-* [ ] **Feature toggles por entorno** (app_settings! esto debe estar en al db checkea supabase mcp).
-* [ ] **Alertas básicas** (acá me puedes hacer una guia de como hacerlo en grafana en base a los logs o metricas que vayamos dejando).
+* [X] Agregar **Grafana Cloud** (frontend + server actions).
+* [X] **CI/CD** completo: build, typecheck, lint, test + **preview** y **gates** a prod (hay que ver si se puede hacer algo con railway ya que estamos usando eso).
+* [X] **Feature toggles por entorno** (app_settings! esto debe estar en al db checkea supabase mcp).
+* [] **Alertas básicas** (acá me puedes hacer una guia de como hacerlo en grafana en base a los logs o metricas que vayamos dejando).
 
 ### 3) Onboarding (telemetría)
 

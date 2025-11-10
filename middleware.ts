@@ -48,12 +48,14 @@ export async function middleware(req: NextRequest) {
   const publicRoutes = ["/", "/login", "/signup"];
   const authRoutes = ["/login", "/signup"];
   const protectedRoutes = ["/scan", "/profile", "/onboarding"];
+  const adminRoutes = ["/admin"];
 
   const isPublicRoute = publicRoutes.includes(pathname);
   const isAuthRoute = authRoutes.includes(pathname);
   const isProtectedRoute = protectedRoutes.some((route) =>
     pathname.startsWith(route)
   );
+  const isAdminRoute = adminRoutes.some((route) => pathname.startsWith(route));
 
   // ============================================
   // CASE 1: Not authenticated
@@ -108,6 +110,26 @@ export async function middleware(req: NextRequest) {
   // Trying to access onboarding again → redirect to scanner
   if (pathname === "/onboarding") {
     return NextResponse.redirect(new URL("/scan", req.url));
+  }
+
+  // ============================================
+  // CASE 3: Admin route protection
+  // ============================================
+  if (isAdminRoute) {
+    // Check if user has owner role (admin)
+    const { data: hasOwnerRole, error } = await supabase.rpc("has_role", {
+      p_role_key: "owner",
+    });
+
+    // If no admin role → redirect to scanner with error message
+    if (error || !hasOwnerRole) {
+      const url = new URL("/scan", req.url);
+      url.searchParams.set("error", "unauthorized");
+      return NextResponse.redirect(url);
+    }
+
+    // Has admin role → allow access
+    return res;
   }
 
   // Allow all other routes
