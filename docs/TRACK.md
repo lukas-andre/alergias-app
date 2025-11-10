@@ -24,12 +24,14 @@ Marcadores: `P0` = Now, `P1` = Next, `P2` = Later
 
 ### 6) Backoffice
 
-* [ ] Layout `/admin` con control de roles (`owner`, `nutritionist`, `moderator`).
-* [ ] **Diccionarios** `/admin/dictionaries` (tabs): CRUD `allergen_types`, `diet_types`, `intolerance_types`.
-* [ ] **Sinónimos** `/admin/synonyms`: chips con peso/locale + **preview de matching**.
-* [ ] **E-numbers** `/admin/enumbers`: CRUD + **import/export** simple.
-* [ ] **Auditoría** `/admin/audit`: lista con diff `old→new` (de `dictionary_changes`).
-* [ ] **Settings** `/admin/settings`: toggles de `app_settings`.
+* [X] Layout `/admin` con control de roles (`owner`, `nutritionist`, `moderator`).
+* [X] **Diccionarios** `/admin/dictionaries` (tabs): CRUD `allergen_types`, `diet_types`, `intolerance_types`.
+* [X] **Sinónimos** `/admin/synonyms`: chips con peso/locale + **preview de matching**.
+* [X] **E-numbers** `/admin/enumbers`: CRUD + **import/export** simple.
+* [X] **Auditoría** `/admin/audit`: lista con diff `old→new` (de `dictionary_changes`).
+* [X] **Settings** `/admin/settings`: toggles de `app_settings`.
+* [X] **i18n completo**: Todo el admin panel traducido a español.
+* [X] **Visual polish**: Iconos en headers, loading states profesionales, empty states ilustrados.
 
 ### 7) Telemetría + Feedback
 
@@ -102,7 +104,7 @@ Marcadores: `P0` = Now, `P1` = Next, `P2` = Later
 * [ ] **Mobile testing** real (layout/stepper).
 * [ ] **Accesibilidad**: auditoría WCAG (axe).
 * [ ] **Animaciones** sutiles (aparición de cards).
-* [ ] **Loading states** (skeletons).
+* [X] **Loading states** (skeletons) - Implementado en DataTable con spinner animado.
 * [ ] **Error boundaries**.
 * [ ] **Zoom** de foto (full-screen).
 
