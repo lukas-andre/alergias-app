@@ -9,6 +9,7 @@ import { DataTable } from "@/components/admin/DataTable";
 import { SettingDialog } from "@/components/admin/SettingDialog";
 import type { DataTableColumn, DataTableAction } from "@/components/admin/DataTable";
 import { fetchSettings, type AppSetting } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 export default function SettingsPage() {
   const [settings, setSettings] = React.useState<AppSetting[]>([]);
@@ -26,7 +27,7 @@ export default function SettingsPage() {
       setSettings(data);
     } catch (error: any) {
       console.error("Error loading settings:", error);
-      toast.error("Failed to load settings");
+      toast.error(t("settings.failedToLoad"));
     } finally {
       setIsLoading(false);
     }
@@ -43,12 +44,12 @@ export default function SettingsPage() {
       return value ? (
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-4 w-4 text-green-600" />
-          <span className="font-medium text-green-600">Enabled</span>
+          <span className="font-medium text-green-600">{t("settings.enabled")}</span>
         </div>
       ) : (
         <div className="flex items-center gap-2">
           <XCircle className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium text-muted-foreground">Disabled</span>
+          <span className="font-medium text-muted-foreground">{t("settings.disabled")}</span>
         </div>
       );
     }
@@ -65,16 +66,16 @@ export default function SettingsPage() {
     if (Array.isArray(value)) {
       return (
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">Array</Badge>
+          <Badge variant="secondary">{t("settings.typeArray")}</Badge>
           <span className="text-xs text-muted-foreground">
-            {value.length} items
+            {t("settings.itemsCount", { count: value.length })}
           </span>
         </div>
       );
     }
 
     if (value === null) {
-      return <span className="text-muted-foreground italic">null</span>;
+      return <span className="text-muted-foreground italic">{t("settings.typeNull")}</span>;
     }
 
     if (valueType === "object") {
@@ -82,61 +83,61 @@ export default function SettingsPage() {
       const truncated = jsonStr.length > 50 ? jsonStr.slice(0, 50) + "..." : jsonStr;
       return (
         <div className="flex items-center gap-2">
-          <Badge variant="secondary">Object</Badge>
+          <Badge variant="secondary">{t("settings.typeObject")}</Badge>
           <span className="text-xs font-mono">{truncated}</span>
         </div>
       );
     }
 
-    return <span className="text-muted-foreground">Unknown type</span>;
+    return <span className="text-muted-foreground">{t("settings.unknownType")}</span>;
   }
 
   function getValueTypeBadge(value: any): React.ReactNode {
     const valueType = typeof value;
 
     if (valueType === "boolean") {
-      return <Badge variant="outline">Boolean</Badge>;
+      return <Badge variant="outline">{t("settings.typeBoolean")}</Badge>;
     }
     if (valueType === "number") {
-      return <Badge variant="outline">Number</Badge>;
+      return <Badge variant="outline">{t("settings.typeNumber")}</Badge>;
     }
     if (valueType === "string") {
-      return <Badge variant="outline">String</Badge>;
+      return <Badge variant="outline">{t("settings.typeString")}</Badge>;
     }
     if (Array.isArray(value)) {
-      return <Badge variant="outline">Array</Badge>;
+      return <Badge variant="outline">{t("settings.typeArray")}</Badge>;
     }
     if (value === null) {
-      return <Badge variant="outline">Null</Badge>;
+      return <Badge variant="outline">{t("settings.typeNull")}</Badge>;
     }
     if (valueType === "object") {
-      return <Badge variant="outline">Object</Badge>;
+      return <Badge variant="outline">{t("settings.typeObject")}</Badge>;
     }
 
-    return <Badge variant="outline">Unknown</Badge>;
+    return <Badge variant="outline">{t("settings.typeUnknown")}</Badge>;
   }
 
   const columns: DataTableColumn<AppSetting>[] = [
     {
       key: "key",
-      label: "Key",
+      label: t("settings.colKey"),
       render: (row) => (
         <span className="font-mono font-semibold text-sm">{row.key}</span>
       ),
     },
     {
       key: "type",
-      label: "Type",
+      label: t("settings.colType"),
       render: (row) => getValueTypeBadge(row.value),
     },
     {
       key: "value",
-      label: "Value",
+      label: t("settings.colValue"),
       render: (row) => formatValue(row.value),
     },
     {
       key: "description",
-      label: "Description",
+      label: t("settings.colDescription"),
       render: (row) => {
         if (!row.description) {
           return <span className="text-muted-foreground text-sm">—</span>;
@@ -150,7 +151,7 @@ export default function SettingsPage() {
     },
     {
       key: "updated_at",
-      label: "Updated At",
+      label: t("settings.colUpdatedAt"),
       render: (row) => {
         const date = new Date(row.updated_at);
         return (
@@ -164,7 +165,7 @@ export default function SettingsPage() {
 
   const actions: DataTableAction<AppSetting>[] = [
     {
-      label: "Edit",
+      label: t("common.edit"),
       variant: "ghost",
       onClick: handleEdit,
     },
@@ -175,26 +176,26 @@ export default function SettingsPage() {
       <div className="flex items-center gap-3">
         <SettingsIcon className="h-8 w-8 text-muted-foreground" />
         <div>
-          <h1 className="text-3xl font-bold">Application Settings</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("settings.title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Configure global application settings and toggles
+            {t("settings.description")}
           </p>
         </div>
       </div>
 
       <div className="rounded-lg border bg-card p-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Badge variant="secondary">{settings.length} settings</Badge>
+          <Badge variant="secondary">{t("settings.settingsCount", { count: settings.length })}</Badge>
           <span>·</span>
           <span>
-            Last updated:{" "}
+            {t("settings.lastUpdated")}:{" "}
             {settings.length > 0
               ? new Date(
                   Math.max(
                     ...settings.map((s) => new Date(s.updated_at).getTime())
                   )
                 ).toLocaleString()
-              : "Never"}
+              : t("settings.never")}
           </span>
         </div>
       </div>
@@ -203,7 +204,7 @@ export default function SettingsPage() {
         data={settings}
         columns={columns}
         actions={actions}
-        searchPlaceholder="Search settings by key or description..."
+        searchPlaceholder={t("settings.searchPlaceholder")}
         searchFn={(setting, query) => {
           const q = query.toLowerCase();
           return (
@@ -212,7 +213,7 @@ export default function SettingsPage() {
           );
         }}
         isLoading={isLoading}
-        emptyMessage="No settings found."
+        emptyMessage={t("settings.emptyMessage")}
         getRowKey={(row) => row.key}
       />
 

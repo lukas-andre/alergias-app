@@ -17,6 +17,7 @@ import { DataTable } from "@/components/admin/DataTable";
 import { AuditDetailDialog } from "@/components/admin/AuditDetailDialog";
 import type { DataTableColumn, DataTableAction } from "@/components/admin/DataTable";
 import { fetchAuditLog, type AuditEntry } from "@/lib/admin/api-client";
+import { t } from "@/lib/admin/translations";
 
 export default function AuditPage() {
   const [entries, setEntries] = React.useState<AuditEntry[]>([]);
@@ -41,7 +42,7 @@ export default function AuditPage() {
       setEntries(data);
     } catch (error: any) {
       console.error("Error loading audit log:", error);
-      toast.error("Failed to load audit log");
+      toast.error(t("audit.failedToLoad"));
     } finally {
       setIsLoading(false);
     }
@@ -60,14 +61,14 @@ export default function AuditPage() {
   const columns: DataTableColumn<AuditEntry>[] = [
     {
       key: "table_name",
-      label: "Table",
+      label: t("audit.colTable"),
       render: (row) => (
         <span className="font-mono text-sm font-medium">{row.table_name}</span>
       ),
     },
     {
       key: "action",
-      label: "Action",
+      label: t("audit.colAction"),
       render: (row) => (
         <Badge variant="outline" className={actionColors[row.action] || ""}>
           {row.action}
@@ -76,7 +77,7 @@ export default function AuditPage() {
     },
     {
       key: "row_id",
-      label: "Row ID",
+      label: t("audit.colRowId"),
       render: (row) => {
         if (!row.row_id) {
           return <span className="text-muted-foreground text-xs">—</span>;
@@ -87,7 +88,7 @@ export default function AuditPage() {
     },
     {
       key: "changed_by",
-      label: "Changed By",
+      label: t("audit.colChangedBy"),
       render: (row) => {
         const truncated =
           row.changed_by.length > 12
@@ -98,7 +99,7 @@ export default function AuditPage() {
     },
     {
       key: "changed_at",
-      label: "Changed At",
+      label: t("audit.colChangedAt"),
       render: (row) => {
         const date = new Date(row.changed_at);
         return (
@@ -115,7 +116,7 @@ export default function AuditPage() {
 
   const actions: DataTableAction<AuditEntry>[] = [
     {
-      label: "View Details",
+      label: t("audit.viewDetails"),
       variant: "ghost",
       onClick: handleViewDetails,
     },
@@ -128,9 +129,9 @@ export default function AuditPage() {
       <div className="flex items-center gap-3">
         <ScrollText className="h-8 w-8 text-muted-foreground" />
         <div>
-          <h1 className="text-3xl font-bold">Audit Log</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t("audit.title")}</h1>
           <p className="text-muted-foreground mt-2">
-            Track all changes made to dictionary data with before/after diffs
+            {t("audit.description")}
           </p>
         </div>
       </div>
@@ -139,13 +140,13 @@ export default function AuditPage() {
         <Filter className="h-4 w-4 text-muted-foreground" />
 
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Table:</span>
+          <span className="text-sm font-medium">{t("audit.filterTable")}</span>
           <Select value={tableFilter} onValueChange={setTableFilter}>
             <SelectTrigger className="w-[200px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Tables</SelectItem>
+              <SelectItem value="all">{t("audit.allTables")}</SelectItem>
               {uniqueTables.map((table) => (
                 <SelectItem key={table} value={table}>
                   {table}
@@ -156,13 +157,13 @@ export default function AuditPage() {
         </div>
 
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Action:</span>
+          <span className="text-sm font-medium">{t("audit.filterAction")}</span>
           <Select value={actionFilter} onValueChange={setActionFilter}>
             <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Actions</SelectItem>
+              <SelectItem value="all">{t("audit.allActions")}</SelectItem>
               <SelectItem value="INSERT">
                 <Badge
                   variant="outline"
@@ -199,11 +200,11 @@ export default function AuditPage() {
             setActionFilter("all");
           }}
         >
-          Clear Filters
+          {t("audit.clearFilters")}
         </Button>
 
         <div className="ml-auto">
-          <Badge variant="secondary">{entries.length} entries</Badge>
+          <Badge variant="secondary">{t("audit.entriesCount", { count: entries.length })}</Badge>
         </div>
       </div>
 
@@ -211,7 +212,7 @@ export default function AuditPage() {
         data={entries}
         columns={columns}
         actions={actions}
-        searchPlaceholder="Search by table, row ID, or user..."
+        searchPlaceholder={t("audit.searchPlaceholder")}
         searchFn={(entry, query) => {
           const q = query.toLowerCase();
           return (
@@ -223,8 +224,8 @@ export default function AuditPage() {
         isLoading={isLoading}
         emptyMessage={
           tableFilter === "all" && actionFilter === "all"
-            ? "No audit entries found."
-            : "No audit entries match the selected filters."
+            ? t("audit.emptyMessage")
+            : t("audit.emptyMessageFiltered")
         }
         getRowKey={(row) => row.id}
       />
