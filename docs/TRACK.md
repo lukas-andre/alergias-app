@@ -46,7 +46,12 @@ Marcadores: `P0` = Now, `P1` = Next, `P2` = Later
 ### 8) Seguridad / Privacidad
 
 * [ ] Tests de **RLS** (no filtrar data de otros usuarios).
-* [ ] Política de **retención de imágenes**: borrar post-inferencia o TTL.
+* [X] **Storage Migration**: Migrar imágenes de base64 → Supabase Storage (commit `fcde537`).
+  - ✅ Bucket `scan-images` con RLS policies
+  - ✅ Upload flow con signed URLs
+  - ✅ API endpoint `/api/recent-scans` para thumbnails
+  - ✅ Schemas actualizados (source_ref, sin image_base64)
+* [ ] Política de **retención de imágenes**: TTL automático o cleanup job.
 * [ ] **Copy** de privacidad + **disclaimer médico** (onboarding y scan).
 
 ### 9) Research / Seeds (continuo)

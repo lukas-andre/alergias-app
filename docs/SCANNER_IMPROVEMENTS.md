@@ -3,8 +3,22 @@
 > **Objetivo**: Mejorar UX del scanner con historial completo, reducir latencia con batch RPCs, y migrar imágenes de base64 → Supabase Storage.
 
 **Fecha**: 2025-01-10
-**Status**: 🚧 In Progress
+**Status**: 🟢 Task 3 Complete | 🔴 Tasks 1-2 Pending
 **Prioridad**: P0 (Technical Debt + UX Critical)
+
+## ✅ Completed Tasks
+
+### Task 3: Storage Migration (✅ COMPLETE - 2025-01-10)
+- ✅ Bucket `scan-images` created
+- ✅ RLS policies applied (INSERT/SELECT/DELETE)
+- ✅ Upload flow migrated to Storage
+- ✅ Signed URL generation implemented
+- ✅ ViewModels updated (imageBase64 → imageUrl)
+- ✅ RecentScans component refactored with API endpoint
+- ✅ Database schema updated (source_ref, removed image_base64)
+- ✅ All tests passing
+
+**Commit:** `fcde537` - feat: migrate images to Supabase Storage
 
 ---
 
