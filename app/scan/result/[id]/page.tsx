@@ -65,7 +65,7 @@ export default function ScanResultPage() {
             const data = await response.json();
             setError(
               data.error ||
-                "Este escaneo usa formato legacy. Por favor re-escanea la etiqueta."
+              "Este escaneo usa formato legacy. Por favor re-escanea la etiqueta."
             );
             setIsLegacy(true);
           } else if (response.status === 404) {
@@ -106,7 +106,10 @@ export default function ScanResultPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50">
+      <main
+        className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50"
+        style={{ width: "100%", maxWidth: "100%", margin: 0 }}
+      >
         <div className="container mx-auto px-4 py-8 max-w-5xl">
           <div className="flex flex-col items-center justify-center py-12 space-y-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
@@ -120,7 +123,10 @@ export default function ScanResultPage() {
   // Error state
   if (error || !viewModel) {
     return (
-      <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50">
+      <main
+        className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50"
+        style={{ width: "100%", maxWidth: "100%", margin: 0 }}
+      >
         <div className="container mx-auto px-4 py-8 max-w-5xl">
           {/* Header */}
           <header className="mb-6">
@@ -162,7 +168,10 @@ export default function ScanResultPage() {
 
   // Success state: Render ViewModel
   return (
-    <main className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50">
+    <main
+      className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-50"
+      style={{ width: "100%", maxWidth: "100%", margin: 0 }}
+    >
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         {/* Header */}
         <header className="mb-6">
