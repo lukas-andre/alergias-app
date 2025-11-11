@@ -80,7 +80,7 @@ export const merchantLocationSchema = z.object({
     .max(10, "Region code must be less than 10 characters")
     .nullable()
     .default(null),
-  hours: z.record(z.string()).nullable().default(null),
+  hours: z.record(z.string(), z.unknown()).nullable().default(null),
   phone: z
     .string()
     .max(50, "Phone must be less than 50 characters")

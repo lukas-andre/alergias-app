@@ -178,6 +178,7 @@ export async function POST(request: Request) {
 
     let profilePayload: ProfilePayload | null = null;
     let viewModel: ResultViewModel | null = null;
+    let risk: any = null;
 
     // Get profile and evaluate risk
     try {
@@ -206,7 +207,7 @@ export async function POST(request: Request) {
           );
 
           // Evaluate risk (with synonym expansion)
-          const risk = await withSpan(
+          risk = await withSpan(
             "risk.evaluate",
             { allergen_count: profilePayload.allergens.length },
             async () => evaluateRisk(data, profilePayload, eNumberPolicies, supabase)

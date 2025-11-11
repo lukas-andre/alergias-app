@@ -67,7 +67,7 @@ export async function fetchENumberPolicies(
 
     // Parse JSON array response
     if (Array.isArray(data)) {
-      return data as ENumberPolicy[];
+      return data as unknown as ENumberPolicy[];
     }
 
     return [];

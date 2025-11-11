@@ -118,7 +118,10 @@ export async function POST(
 
       const { data: newLocation, error } = await serviceClient
         .from("merchant_locations")
-        .insert(data)
+        .insert({
+          ...data,
+          hours: data.hours as any,
+        })
         .select()
         .single();
 

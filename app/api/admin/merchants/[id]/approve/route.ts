@@ -51,7 +51,7 @@ export async function POST(
       // Build update object dynamically
       const updateData: {
         is_approved: boolean;
-        billing_status: string;
+        billing_status: "trial" | "active" | "past_due" | "inactive";
         approved_by?: string;
         approved_at?: string;
       } = {

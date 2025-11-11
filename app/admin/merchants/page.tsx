@@ -252,9 +252,8 @@ export default function MerchantsPage() {
     },
     {
       label: "Eliminar",
-      variant: "ghost",
+      variant: "destructive",
       onClick: handleDelete,
-      destructive: true,
     },
   ];
 
@@ -318,7 +317,6 @@ export default function MerchantsPage() {
         columns={columns}
         actions={actions}
         isLoading={isLoading}
-        searchKey="display_name"
         searchPlaceholder="Buscar por nombre..."
       />
 
