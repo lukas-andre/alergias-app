@@ -337,6 +337,151 @@ export type Database = {
         }
         Relationships: []
       }
+      merchant_locations: {
+        Row: {
+          address: string | null
+          created_at: string
+          hours: Json | null
+          id: string
+          is_primary: boolean
+          lat: number
+          lng: number
+          merchant_id: string
+          phone: string | null
+          region_code: string | null
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          hours?: Json | null
+          id?: string
+          is_primary?: boolean
+          lat: number
+          lng: number
+          merchant_id: string
+          phone?: string | null
+          region_code?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          hours?: Json | null
+          id?: string
+          is_primary?: boolean
+          lat?: number
+          lng?: number
+          merchant_id?: string
+          phone?: string | null
+          region_code?: string | null
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_locations_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchant_media: {
+        Row: {
+          alt: string | null
+          created_at: string
+          id: string
+          merchant_id: string
+          order: number
+          type: Database["public"]["Enums"]["media_type"]
+          url: string
+        }
+        Insert: {
+          alt?: string | null
+          created_at?: string
+          id?: string
+          merchant_id: string
+          order?: number
+          type: Database["public"]["Enums"]["media_type"]
+          url: string
+        }
+        Update: {
+          alt?: string | null
+          created_at?: string
+          id?: string
+          merchant_id?: string
+          order?: number
+          type?: Database["public"]["Enums"]["media_type"]
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "merchant_media_merchant_id_fkey"
+            columns: ["merchant_id"]
+            isOneToOne: false
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      merchants: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          billing_status: Database["public"]["Enums"]["billing_status"]
+          categories: string[] | null
+          created_at: string
+          created_by: string | null
+          diet_tags: string[] | null
+          display_name: string
+          id: string
+          is_approved: boolean
+          logo_url: string | null
+          priority_score: number
+          short_desc: string | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          billing_status?: Database["public"]["Enums"]["billing_status"]
+          categories?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          diet_tags?: string[] | null
+          display_name: string
+          id?: string
+          is_approved?: boolean
+          logo_url?: string | null
+          priority_score?: number
+          short_desc?: string | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          billing_status?: Database["public"]["Enums"]["billing_status"]
+          categories?: string[] | null
+          created_at?: string
+          created_by?: string | null
+          diet_tags?: string[] | null
+          display_name?: string
+          id?: string
+          is_approved?: boolean
+          logo_url?: string | null
+          priority_score?: number
+          short_desc?: string | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       strictness_overrides: {
         Row: {
           allergen_id: string
@@ -684,6 +829,10 @@ export type Database = {
         Args: { p_code: string; p_user_id: string }
         Returns: Json
       }
+      decide_e_numbers_batch: {
+        Args: { p_codes: string[]; p_user_id: string }
+        Returns: Json
+      }
       get_effective_strictness: {
         Args: { p_allergen_key: string; p_user_id: string }
         Returns: Json
@@ -692,9 +841,37 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: Json
       }
-      get_my_profile_payload: { Args: Record<PropertyKey, never>; Returns: Json }
+      get_my_profile_payload: { Args: never; Returns: Json }
+      get_nearby_merchants: {
+        Args: {
+          p_categories?: string[]
+          p_diet_tags?: string[]
+          p_lat: number
+          p_limit?: number
+          p_lng: number
+          p_radius_km?: number
+        }
+        Returns: {
+          address: string
+          categories: string[]
+          diet_tags: string[]
+          display_name: string
+          distance_km: number
+          id: string
+          lat: number
+          lng: number
+          logo_url: string
+          priority_score: number
+          short_desc: string
+          slug: string
+        }[]
+      }
       get_profile_payload: { Args: { p_user_id: string }; Returns: Json }
       has_role: { Args: { p_role_key: string }; Returns: boolean }
+      haversine_km: {
+        Args: { lat1: number; lat2: number; lon1: number; lon2: number }
+        Returns: number
+      }
       is_admin: { Args: { uid: string }; Returns: boolean }
       match_allergen_synonyms_fuzzy: {
         Args: { p_limit?: number; p_min_similarity?: number; p_query: string }
@@ -706,11 +883,12 @@ export type Database = {
           weight: number
         }[]
       }
-      show_limit: { Args: Record<PropertyKey, never>; Returns: number }
+      show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
-      [_ in never]: never
+      billing_status: "trial" | "active" | "past_due" | "inactive"
+      media_type: "cover" | "gallery"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -837,6 +1015,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      billing_status: ["trial", "active", "past_due", "inactive"],
+      media_type: ["cover", "gallery"],
+    },
   },
 } as const

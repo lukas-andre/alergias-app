@@ -10,6 +10,7 @@ import {
   ScrollText,
   LayoutDashboard,
   MessageSquare,
+  Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,11 @@ const navItems: NavItem[] = [
     label: "Panel de Control",
     href: "/admin",
     icon: LayoutDashboard,
+  },
+  {
+    label: "Locales Verificados",
+    href: "/admin/merchants",
+    icon: Store,
   },
   {
     label: "Números E",

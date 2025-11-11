@@ -12,10 +12,13 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, Scan, ShieldCheck, Heart, Users } from "lucide-react";
+import { Loader2, Scan, ShieldCheck, Heart, Users, Store } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSupabase } from "@/components/SupabaseProvider";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { MerchantCarousel } from "@/components/merchants/MerchantCarousel";
+import { useGeolocation } from "@/lib/hooks/useGeolocation";
+import type { NearbyMerchant } from "@/lib/merchants/types";
 
 type UserState = "loading" | "unauthenticated" | "needs_onboarding" | "ready";
 
@@ -23,6 +26,10 @@ export default function Home() {
   const supabase = useSupabase();
   const router = useRouter();
   const [userState, setUserState] = useState<UserState>("loading");
+  const [nearbyMerchants, setNearbyMerchants] = useState<NearbyMerchant[]>([]);
+  const [merchantsLoading, setMerchantsLoading] = useState(false);
+
+  const { coords: userCoords } = useGeolocation({ autoRequest: true });
 
   useEffect(() => {
     async function checkUserState() {
@@ -46,6 +53,36 @@ export default function Home() {
     checkUserState();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Fetch nearby merchants when location is available
+  useEffect(() => {
+    if (!userCoords) return;
+
+    const fetchMerchants = async () => {
+      setMerchantsLoading(true);
+      try {
+        const params = new URLSearchParams({
+          lat: userCoords.lat.toString(),
+          lng: userCoords.lng.toString(),
+          radius_km: "15",
+          limit: "10",
+        });
+
+        const response = await fetch(`/api/public/merchants?${params}`);
+        if (response.ok) {
+          const result = await response.json();
+          setNearbyMerchants(result.data || []);
+        }
+      } catch (error) {
+        console.error("Error fetching nearby merchants:", error);
+      } finally {
+        setMerchantsLoading(false);
+      }
+    };
+
+    fetchMerchants();
+    // Use primitive values instead of object reference to prevent infinite loops
+  }, [userCoords?.lat, userCoords?.lng]);
 
   const handleCTA = () => {
     switch (userState) {
@@ -267,6 +304,49 @@ export default function Home() {
             </div>
           </div>
         </section>
+
+        {/* Nearby Merchants Carousel */}
+        {nearbyMerchants.length > 0 && (
+          <section className="max-w-7xl mx-auto mt-24">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-display text-3xl font-bold text-neutral-900 mb-2">
+                  Locales Cerca de Ti
+                </h2>
+                <p className="text-neutral-600">
+                  Descubre locales verificados con opciones para tus necesidades dietarias
+                </p>
+              </div>
+              <Link href="/merchants">
+                <Button variant="outline" className="gap-2">
+                  <Store className="h-4 w-4" />
+                  Ver Todos
+                </Button>
+              </Link>
+            </div>
+            <MerchantCarousel
+              merchants={nearbyMerchants.map((m) => ({
+                id: m.id,
+                slug: m.slug,
+                display_name: m.display_name,
+                short_desc: m.short_desc,
+                logo_url: m.logo_url,
+                diet_tags: m.diet_tags,
+                categories: m.categories,
+                priority_score: m.priority_score,
+                distance_km: m.distance_km,
+                primary_location: {
+                  lat: m.lat,
+                  lng: m.lng,
+                  address: m.address,
+                  region_code: null,
+                },
+              }))}
+              loading={merchantsLoading}
+              showDistance={true}
+            />
+          </section>
+        )}
       </main>
 
       {/* Footer */}
