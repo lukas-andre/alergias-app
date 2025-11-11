@@ -248,6 +248,116 @@ export async function getRecentExtractions(
 }
 
 /**
+ * Fetch paginated extractions for history page
+ *
+ * @param supabase - Supabase client
+ * @param userId - User ID
+ * @param options - Pagination and filter options
+ * @returns Paginated extractions with metadata
+ */
+export async function getPaginatedExtractions(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  options: {
+    page?: number;        // Page number (0-indexed)
+    pageSize?: number;    // Items per page (default: 20)
+    orderBy?: 'created_at' | 'final_confidence';
+    orderDirection?: 'asc' | 'desc';
+  } = {}
+): Promise<{
+  data: Array<{
+    id: string;
+    created_at: string;
+    final_confidence: number | null;
+    detected_allergens: string[];
+    allergen_count: number;
+    imageUrl?: string;
+    verdict_level: 'low' | 'medium' | 'high' | null;
+  }>;
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}> {
+  const {
+    page = 0,
+    pageSize = 20,
+    orderBy = 'created_at',
+    orderDirection = 'desc'
+  } = options;
+
+  // Get total count
+  const { count, error: countError } = await supabase
+    .from('extractions')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('origin', 'label');
+
+  if (countError) {
+    console.error('Error getting extraction count:', countError);
+    throw new Error(`Failed to get count: ${countError.message}`);
+  }
+
+  const total = count || 0;
+  const totalPages = Math.ceil(total / pageSize);
+
+  // Get paginated data
+  const { data, error } = await supabase
+    .from('extractions')
+    .select('id, created_at, final_confidence, raw_json, source_ref')
+    .eq('user_id', userId)
+    .eq('origin', 'label')
+    .order(orderBy, { ascending: orderDirection === 'asc' })
+    .range(page * pageSize, (page + 1) * pageSize - 1);
+
+  if (error) {
+    console.error('Error fetching extractions:', error);
+    throw new Error(`Failed to fetch extractions: ${error.message}`);
+  }
+
+  // Transform data with signed URLs
+  const transformedData = await Promise.all(
+    (data || []).map(async (item) => {
+      const rawJson = item.raw_json as IngredientsResult | null;
+      const detectedAllergens = rawJson?.detected_allergens.map(a => a.key) || [];
+      const confidence = item.final_confidence || rawJson?.quality.confidence || null;
+
+      // Compute verdict level from confidence
+      let verdictLevel: 'low' | 'medium' | 'high' | null = null;
+      if (confidence !== null) {
+        if (confidence >= 0.9) verdictLevel = 'low';
+        else if (confidence >= 0.7) verdictLevel = 'medium';
+        else verdictLevel = 'high';
+      }
+
+      // Generate signed URL if source_ref exists
+      let imageUrl: string | undefined;
+      if (item.source_ref) {
+        imageUrl = await getSignedImageUrl(item.source_ref) || undefined;
+      }
+
+      return {
+        id: item.id,
+        created_at: item.created_at,
+        final_confidence: confidence,
+        detected_allergens: detectedAllergens,
+        allergen_count: detectedAllergens.length,
+        imageUrl,
+        verdict_level: verdictLevel,
+      };
+    })
+  );
+
+  return {
+    data: transformedData,
+    total,
+    page,
+    pageSize,
+    totalPages,
+  };
+}
+
+/**
  * Normalize text for canonical token form
  *
  * @param text - Raw text

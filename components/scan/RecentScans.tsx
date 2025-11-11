@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Clock, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardHeader,
@@ -163,6 +164,14 @@ export function RecentScans({ className }: { className?: string }) {
             </Link>
           );
         })}
+
+        {/* Link to full history */}
+        <Link href="/scan/history" className="block">
+          <Button variant="ghost" size="sm" className="w-full mt-2">
+            Ver Todo el Historial
+            <ChevronRight className="w-4 h-4 ml-1" />
+          </Button>
+        </Link>
       </CardContent>
     </Card>
   );
