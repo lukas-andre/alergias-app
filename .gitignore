@@ -43,3 +43,6 @@ next-env.d.ts
 
 .mcp.json
 .claude.json
+
+# codex configuration with sensitive tokens
+.codex/
