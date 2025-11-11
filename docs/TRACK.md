@@ -59,16 +59,24 @@
 
 * **AC**
 
-  * [ ] Admin crea/edita/aprueba merchant y define `billing_status`.
-  * [ ] Usuario ve carrusel “Cerca de ti” y abre ficha pública.
-  * [ ] RLS impide lecturas de merchants no aprobados o inactivos.
-  * [ ] Seed ≥ 10 merchants de prueba (3 regiones).
+  * [x] Admin crea/edita/aprueba merchant y define `billing_status`.
+  * [x] Usuario ve carrusel "Cerca de ti" y abre ficha pública.
+  * [x] RLS impide lecturas de merchants no aprobados o inactivos.
+  * [x] Seed ≥ 10 merchants de prueba (3 regiones).
 
 * **Entregables**
 
-  * Migraciones SQL + políticas RLS + seeds.
-  * Wireframes: `/admin/merchants`, `/merchants`, `/merchants/[slug]`.
-  * E2E feliz: crear→aprobar→aparece en carrusel/mapa→ficha visible.
+  * [x] Migraciones SQL + políticas RLS + seeds.
+  * [x] Wireframes: `/admin/merchants`, `/merchants`, `/merchants/[slug]`.
+  * [x] E2E feliz: crear→aprobar→aparece en carrusel/mapa→ficha visible.
+
+* **COMPLETED** (2025-01-11)
+  * ✅ Fase 1: Backend + Admin UI con CRUD completo y aprobación
+  * ✅ Fase 2: UI Pública con mapa interactivo (MapLibre), carrusel (Embla) y geolocalización
+  * ✅ PostGIS + RPC `get_nearby_merchants` para búsquedas geoespaciales
+  * ✅ Fix crítico: infinite loop en useGeolocation (memoización + ref guard)
+  * ✅ 27 archivos, 4,855+ líneas de código
+  * 📍 Próximo: Seeds de merchants reales + telemetría de costos
 
 ---
 
